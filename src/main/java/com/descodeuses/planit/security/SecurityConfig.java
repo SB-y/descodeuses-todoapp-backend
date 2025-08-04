@@ -47,8 +47,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Désactive la protection CSRF (inutile avec JWT car stateless)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Active la configuration CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // Autorise les requêtes non authentifiées vers // /auth/**
-                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN") // Nécessite un rôle USER ou ADMIN pour /api/**
+                        .requestMatchers("/auth/**").permitAll() // Autorise les requêtes non authentifiées vers //
+                                                                 // /auth/**
+                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN") // Nécessite un rôle USER ou ADMIN pour
+                                                                                // /api/**
                         .anyRequest().authenticated() // Toutes les autres requêtes doivent être authentifiées
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -70,7 +72,9 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowCorsOrigin));
+        // split la chaîne en liste d'origines
+        List<String> allowedOrigins = List.of(allowCorsOrigin.split(","));
+        config.setAllowedOrigins(allowedOrigins);
         // En local
         // config.setAllowedOrigins(List.of("http://localhost:4200",
         // "http://localhost:54872"));
