@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -47,6 +48,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Désactive la protection CSRF (inutile avec JWT car stateless)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Active la configuration CORS
                 .authorizeHttpRequests(auth -> auth
+                        // Autoriser toutes les requêtes OPTIONS (préflight CORS)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll() // Autorise les requêtes non authentifiées vers //
                                                                  // /auth/**
                         .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN") // Nécessite un rôle USER ou ADMIN pour
