@@ -30,8 +30,7 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Méthode générique qui extrait n'importe quelle information depuis les claims
-    // du token
+    // Méthode générique qui extrait n'importe quelle information depuis les claims du token
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -46,8 +45,7 @@ public class JwtUtil {
                 .getBody(); // Récupère le corps du token (les claims)
     }
 
-    // Vérifie si le token est expiré en comparant la date d'expiration avec la date
-    // actuelle
+    // Vérifie si le token est expiré en comparant la date d'expiration avec la date actuelle
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -56,8 +54,7 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
 
-        // Récupère la liste des rôles de l'utilisateur et les ajoute dans les claims du
-        // token
+        // Récupère la liste des rôles de l'utilisateur et les ajoute dans les claims du token
         List<String> roles = userDetails.getAuthorities()
                 .stream()
                 .map(auth -> auth.getAuthority())
@@ -69,8 +66,7 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername());
     }
 
-    // Crée effectivement le token JWT avec les claims, le sujet, la date d'émission
-    // et d'expiration
+    // Crée effectivement le token JWT avec les claims, le sujet, la date d'émission et d'expiration
     private String createToken(Map<String, Object> claims, String subject) {
         long validityInMs = 1000 * 60 * 60 * 10; // Durée de validité : 10 heures
 
@@ -83,8 +79,7 @@ public class JwtUtil {
                 .compact(); // Génère le token sous forme de chaîne compacte
     }
 
-    // Valide le token en vérifiant que le username correspond et que le token n'est
-    // pas expiré
+    // Valide le token en vérifiant que le username correspond et que le token n'est pas expiré
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));

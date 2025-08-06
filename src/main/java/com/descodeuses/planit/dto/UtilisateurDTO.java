@@ -53,8 +53,7 @@ public class UtilisateurDTO {
     public void setRole(String role) {
         this.role = role;
     }
-
-
+    
     public String getName() {
         return name;
     }

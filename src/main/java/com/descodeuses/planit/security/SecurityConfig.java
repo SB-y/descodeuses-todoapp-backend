@@ -76,14 +76,16 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // split la chaîne en liste d'origines
-        List<String> allowedOrigins = List.of(allowCorsOrigin.split(","));
-        config.setAllowedOrigins(allowedOrigins);
+        //List<String> allowedOrigins = List.of(allowCorsOrigin.split(","));
+        config.setAllowedOriginPatterns(List.of(allowCorsOrigin.split(",")));
         // En local
-        // config.setAllowedOrigins(List.of("http://localhost:4200",
+        //config.setAllowedOrigins(List.of("http://localhost:4200",
         // "http://localhost:54872"));
-        // Origines autorisées (frontend local)
-        config.setAllowedMethods(List.of("*"));
+
+
         // Méthodes HTTP autorisées
+        config.setAllowedMethods(List.of("*"));
+        
         config.setAllowedHeaders(List.of("*")); // Autorise tous les headers
         config.setAllowCredentials(true); // Autorise les cookies et les headers d’authentification
 
