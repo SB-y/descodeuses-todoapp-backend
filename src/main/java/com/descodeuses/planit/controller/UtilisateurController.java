@@ -3,6 +3,8 @@ package com.descodeuses.planit.controller;
 import com.descodeuses.planit.dto.UtilisateurDTO;
 import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.service.UserService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,23 +20,43 @@ public class UtilisateurController {
         this.userService = userService;
     }
 
-//Indique que cette méthode doit répondre à une requête HTTP GET vers /api/utilisateur (ou autre, selon ton @RequestMapping de classe)
-@GetMapping
-// Cette méthode retourne une réponse HTTP contenant une liste de DTOs de type UtilisateurDTO
-public ResponseEntity<List<UtilisateurDTO>> getAllUtilisateurs() {
+    @GetMapping
+    public ResponseEntity<List<UtilisateurDTO>> getAllUtilisateurs() {
+        List<UtilisateurEntity> utilisateurs = userService.getAllUtilisateurs();
 
-    // Appelle le service pour récupérer la liste des entités Utilisateur depuis la base de données
-    List<UtilisateurEntity> utilisateurs = userService.getAllUtilisateurs();
+        List<UtilisateurDTO> dtos = utilisateurs.stream()
+                .map(userService::convertToDTO) // Appel méthode de conversion dans le service
+                .toList();
 
-    // Transforme chaque UtilisateurEntity en UtilisateurDTO en utilisant Java Streams
-    // Cela permet de ne pas exposer toute l'entité (relations JPA, mots de passe, etc.)
-    List<UtilisateurDTO> dtos = utilisateurs.stream()
-        // Pour chaque entité, on crée un nouvel objet UtilisateurDTO avec uniquement les infos nécessaires
-        .map(u -> new UtilisateurDTO(u.getId(), u.getUsername(), u.getPassword(), u.getRole(), u.getName(), u.getSurname(), u.getGenre()))
-        // Collecte tous les DTOs dans une liste
-        .toList();
+        return ResponseEntity.ok(dtos);
+    }
 
-    // Renvoie la liste des DTOs avec un statut HTTP 200 OK dans la réponse
-    return ResponseEntity.ok(dtos);
+    @GetMapping("/monprofil")
+    public ResponseEntity<UtilisateurDTO> getCurrentUser() {
+        UtilisateurEntity currentUser = userService.getCurrentUser();
+        UtilisateurDTO dto = userService.convertToDTO(currentUser);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/monprofil")
+    public ResponseEntity<UtilisateurDTO> update(@RequestBody UtilisateurDTO dto) {
+        UtilisateurEntity currentUser = userService.getCurrentUser();
+        Long id = currentUser.getId();
+
+        UtilisateurDTO updated = userService.update(id, dto);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}")
+public ResponseEntity<UtilisateurDTO> updateById(@PathVariable Long id, @RequestBody UtilisateurDTO dto) {
+    UtilisateurDTO updated = userService.update(id, dto);
+    return ResponseEntity.ok(updated);
 }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
 }

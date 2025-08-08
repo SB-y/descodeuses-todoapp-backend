@@ -1,3 +1,10 @@
+// implémentation spécifique de l’interface Spring Security UserDetailsService.
+// rôle unique : charger les informations utilisateur à partir de la base de données 
+// quand Spring Security en a besoin (typiquement lors de l’authentification).
+// renvoie un objet UserDetails (avec username, password, roles) qui permet à Spring Security 
+//de vérifier les identifiants.
+
+
 package com.descodeuses.planit.service;
 
 // Import des classes nécessaires

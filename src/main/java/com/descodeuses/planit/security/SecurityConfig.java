@@ -77,12 +77,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         // split la chaîne en liste d'origines
         //List<String> allowedOrigins = List.of(allowCorsOrigin.split(","));
-        config.setAllowedOriginPatterns(List.of(allowCorsOrigin.split(",")));
-        // En local
-        //config.setAllowedOrigins(List.of("http://localhost:4200",
-        // "http://localhost:54872"));
-
-
+        config.setAllowedOrigins(List.of(allowCorsOrigin.split(",")));
+       
         // Méthodes HTTP autorisées
         config.setAllowedMethods(List.of("*"));
         

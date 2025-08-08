@@ -4,6 +4,7 @@ package com.descodeuses.planit.entity;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 // Import des annotations JPA pour définir une entité de base de données
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +28,7 @@ public class UtilisateurEntity {
     private Long id;
 
     // Relation 1-n : un utilisateur peut avoir plusieurs actions
-    @OneToMany(mappedBy = "utilisateur")
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<ActionEntity> actions = new HashSet<>();
 
     // Getter pour récupérer la liste des actions liées à cet utilisateur
