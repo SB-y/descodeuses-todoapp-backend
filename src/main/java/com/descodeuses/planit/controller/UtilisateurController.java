@@ -4,6 +4,8 @@ import com.descodeuses.planit.dto.UtilisateurDTO;
 import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.service.UserService;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,17 @@ public class UtilisateurController {
         return ResponseEntity.ok(dto);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
+        try {
+            UtilisateurEntity utilisateur = userService.getById(id);
+            UtilisateurDTO dto = userService.convertToDTO(utilisateur);
+            return ResponseEntity.ok(dto);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PutMapping("/monprofil")
     public ResponseEntity<UtilisateurDTO> update(@RequestBody UtilisateurDTO dto) {
         UtilisateurEntity currentUser = userService.getCurrentUser();
@@ -48,10 +61,10 @@ public class UtilisateurController {
     }
 
     @PutMapping("/{id}")
-public ResponseEntity<UtilisateurDTO> updateById(@PathVariable Long id, @RequestBody UtilisateurDTO dto) {
-    UtilisateurDTO updated = userService.update(id, dto);
-    return ResponseEntity.ok(updated);
-}
+    public ResponseEntity<UtilisateurDTO> updateById(@PathVariable Long id, @RequestBody UtilisateurDTO dto) {
+        UtilisateurDTO updated = userService.update(id, dto);
+        return ResponseEntity.ok(updated);
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {

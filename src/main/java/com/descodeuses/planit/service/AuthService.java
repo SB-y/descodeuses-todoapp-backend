@@ -2,7 +2,7 @@
 // utilise UserDetailsServiceImpl pour charger les utilisateurs.
 // Valide les identifiants (via AuthenticationManager),
 // Gère la génération du JWT,
-//Gère la création d’un nouvel utilisateur (inscription)
+
 
 
 
@@ -45,13 +45,5 @@ public class AuthService {
         return jwtUtil.generateToken(userDetails);
     }
 
-    public void register(UtilisateurEntity user) {
-        if (utilisateurRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new RuntimeException("Utilisateur déjà existant");
-        }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("ROLE_USER");
-        utilisateurRepository.save(user);
-    }
 }

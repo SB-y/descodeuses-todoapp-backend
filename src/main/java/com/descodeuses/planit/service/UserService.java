@@ -4,6 +4,7 @@
 //Supprime un utilisateur
 //Convertit entre entité et DTO
 //Gère les rôles et infos personnelles (hors mot de passe généralement)
+//Gère la création d’un nouvel utilisateur (inscription)
 
 // Déclare que cette classe fait partie du package com.descodeuses.planit.service
 package com.descodeuses.planit.service;
@@ -113,6 +114,23 @@ public class UserService {
 
         UtilisateurEntity updatedEntity = repository.save(existingEntity);
         return convertToDTO(updatedEntity);
+    }
+
+    //Récupère utilisateur par id (pour page profil/)
+    public UtilisateurEntity getById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
+    }
+
+       //Ajoute utilisateur
+       public void register(UtilisateurEntity user) {
+        if (utilisateurRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Utilisateur déjà existant");
+        }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("ROLE_USER");
+        utilisateurRepository.save(user);
     }
 
     // Supprime un utilisateur
