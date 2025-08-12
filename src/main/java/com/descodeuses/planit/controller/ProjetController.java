@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,34 +30,33 @@ public class ProjetController {
         this.service = service;
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<ProjetDTO> getById(@PathVariable Long id) {
-        ProjetDTO projetDTO = service.getById(id);
+    public ResponseEntity<ProjetDTO> getById(@PathVariable Long id, Authentication authentication) {
+        ProjetDTO projetDTO = service.getById(id, authentication);
         return new ResponseEntity<>(projetDTO, HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjetDTO>> getAll() {
-        List<ProjetDTO> items = service.getAll();
+    public ResponseEntity<List<ProjetDTO>> getAll(Authentication authentication) {
+        List<ProjetDTO> items = service.getAllByUser(authentication);
         return new ResponseEntity<>(items, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<ProjetDTO> create(@RequestBody ProjetDTO dto) {
-        ProjetDTO created = service.create(dto);
+    public ResponseEntity<ProjetDTO> create(@RequestBody ProjetDTO dto, Authentication authentication) {
+        ProjetDTO created = service.create(dto, authentication);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjetDTO> update(@PathVariable Long id, @RequestBody ProjetDTO dto) {
-        ProjetDTO updated = service.update(id, dto);
+    public ResponseEntity<ProjetDTO> update(@PathVariable Long id, @RequestBody ProjetDTO dto, Authentication authentication) {
+        ProjetDTO updated = service.update(id, dto, authentication);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
+        service.delete(id, authentication);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

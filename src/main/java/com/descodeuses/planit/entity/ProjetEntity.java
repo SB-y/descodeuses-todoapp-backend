@@ -5,11 +5,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "projet")
-
 
 public class ProjetEntity {
 
@@ -21,13 +22,17 @@ public class ProjetEntity {
     private String title;
     private String description;
 
+    // Ajout de la relation ManyToOne vers UtilisateurEntity
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private UtilisateurEntity utilisateur;
 
     // Constructeur à vide
-    public ProjetEntity() {};
+    public ProjetEntity() {
+    };
 
-
-     // Constructeur avec tous les champs
-     public ProjetEntity(Long id, String title, String description) {
+    // Constructeur avec tous les champs
+    public ProjetEntity(Long id, String title, String description) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -55,5 +60,13 @@ public class ProjetEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public UtilisateurEntity getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(UtilisateurEntity utilisateur) {
+        this.utilisateur = utilisateur;
     }
 }
