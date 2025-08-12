@@ -8,7 +8,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -27,19 +29,23 @@ public class ContactEntity {
     private String email;
     private String tel;
 
+    // Ajout de la relation ManyToOne vers UtilisateurEntity
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private UtilisateurEntity utilisateur;
+
 
 
     public ContactEntity() {} // Constructeur vide requis par JPA
 
     // Constructeur avec tous les champs
-    public ContactEntity(Long id, String prenom, String nom, String email, String tel) {
+    public ContactEntity(Long id, String nom, String prenom, String email, String tel) {
         this.id = id;
-        this.prenom = prenom;
         this.nom = nom;
+        this.prenom = prenom;
         this.email = email;
         this.tel = tel;
     }
-
 
 
     public Long getId() {
@@ -84,6 +90,14 @@ public class ContactEntity {
         this.tel = tel;
     }
 
+
+    public UtilisateurEntity getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(UtilisateurEntity utilisateur) {
+        this.utilisateur = utilisateur;
+    }
 
 
     @ManyToMany(mappedBy = "members")

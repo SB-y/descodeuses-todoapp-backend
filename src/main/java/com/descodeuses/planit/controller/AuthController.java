@@ -48,11 +48,10 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         // Étape 2 : Extraire le rôle (on prend le premier rôle trouvé)
-        String role = auth.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse("");
+        String role = auth.getAuthorities() // retourne une Collection<GrantedAuthority>
+                .stream() // transforme en Stream<GrantedAuthority>
+                .map(GrantedAuthority::getAuthority) // applique getAuthority() sur chaque élément
+                .findFirst().orElse(""); // Prend le premier rôle trouvé (ou une chaîne vide si aucun)
 
         // Étape 3 : Générer le JWT avec le service d’authentification
         String jwt = authService.login(request.getUsername(), request.getPassword());

@@ -8,10 +8,10 @@ public class ContactDTO {
     private String email;
     private String tel;
 
-    public ContactDTO(Long id, String prenom, String nom, String email, String tel) {
+    public ContactDTO(Long id, String nom, String prenom, String email, String tel) {
         this.id = id;
-        this.prenom = prenom;
         this.nom = nom;
+        this.prenom = prenom;
         this.email = email;
         this.tel = tel;
     }
