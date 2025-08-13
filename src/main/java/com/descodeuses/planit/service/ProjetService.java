@@ -8,10 +8,11 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-
 import com.descodeuses.planit.dto.ProjetDTO;
+import com.descodeuses.planit.entity.ActionEntity;
 import com.descodeuses.planit.entity.ProjetEntity;
 import com.descodeuses.planit.entity.UtilisateurEntity;
+import com.descodeuses.planit.repository.ActionRepository;
 import com.descodeuses.planit.repository.ProjetRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -19,20 +20,23 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class ProjetService {
 
+    private final ActionRepository actionRepository;
+
     private final ProjetRepository repository;
     private final UserService utilisateurService;
 
-    public ProjetService(ProjetRepository repository, UserService utilisateurService) {
+    public ProjetService(ProjetRepository repository, UserService utilisateurService,
+            ActionRepository actionRepository) {
         this.repository = repository;
         this.utilisateurService = utilisateurService;
+        this.actionRepository = actionRepository;
     }
 
     private ProjetDTO convertToDTO(ProjetEntity projet) {
         return new ProjetDTO(
-            projet.getId(),
-            projet.getTitle(),
-            projet.getDescription()
-        );
+                projet.getId(),
+                projet.getTitle(),
+                projet.getDescription());
     }
 
     private ProjetEntity convertToEntity(ProjetDTO projetDTO) {
@@ -56,7 +60,7 @@ public class ProjetService {
     // Récupère un projet par ID (vérifie que l'utilisateur est propriétaire)
     public ProjetDTO getById(Long id, Authentication authentication) {
         ProjetEntity projet = repository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
 
         String username = authentication.getName();
         UtilisateurEntity user = utilisateurService.findByUsername(username);
@@ -83,7 +87,7 @@ public class ProjetService {
     // Met à jour un projet existant (vérifie propriété)
     public ProjetDTO update(Long id, ProjetDTO projetDTO, Authentication authentication) {
         ProjetEntity existing = repository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
 
         String username = authentication.getName();
         UtilisateurEntity user = utilisateurService.findByUsername(username);
@@ -102,7 +106,7 @@ public class ProjetService {
     // Supprime un projet (vérifie propriété)
     public void delete(Long id, Authentication authentication) {
         ProjetEntity projet = repository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Projet non trouvé avec id: " + id));
 
         String username = authentication.getName();
         UtilisateurEntity user = utilisateurService.findByUsername(username);
@@ -110,6 +114,13 @@ public class ProjetService {
         if (!projet.getUtilisateur().getId().equals(user.getId())) {
             throw new SecurityException("Accès refusé");
         }
+
+        // Dissocier les actions pour pouvoir supprimer un projet
+        List<ActionEntity> actions = actionRepository.findByProjet(projet);
+        for (ActionEntity action : actions) {
+            action.setProjet(null);
+        }
+        actionRepository.saveAll(actions);
 
         repository.deleteById(id);
     }

@@ -27,9 +27,15 @@ public class UtilisateurEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relation 1-n : un utilisateur peut avoir plusieurs actions
+    // Relation 1-n : un utilisateur peut avoir plusieurs actions, projets et contacts (cascade pour pouvoir supprimer ses 3 éléments si suppression utilisateur)
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<ActionEntity> actions = new HashSet<>();
+
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<ContactEntity> contacts = new HashSet<>();
+
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<ProjetEntity> projets = new HashSet<>();
 
     // Getter pour récupérer la liste des actions liées à cet utilisateur
     public Set<ActionEntity> getActions() {

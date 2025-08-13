@@ -68,7 +68,6 @@ public class ActionEntity {
     private ProjetEntity projet;
 
 
-
     // pour la relation un user pour plusieurs taches
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")

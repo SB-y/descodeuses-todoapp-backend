@@ -29,7 +29,7 @@ public class ContactEntity {
     private String email;
     private String tel;
 
-    // Ajout de la relation ManyToOne vers UtilisateurEntity
+    // Relation ManyToOne vers UtilisateurEntity
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
     private UtilisateurEntity utilisateur;

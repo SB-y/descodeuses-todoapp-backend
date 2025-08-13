@@ -2,12 +2,10 @@ package com.descodeuses.planit.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import com.descodeuses.planit.dto.ActionDTO;
 import com.descodeuses.planit.dto.ContactDTO;
 import com.descodeuses.planit.entity.ContactEntity;
 import com.descodeuses.planit.entity.UtilisateurEntity;
@@ -116,6 +114,7 @@ public class ContactService {
         if (!contact.getUtilisateur().getId().equals(utilisateur.getId())) {
             throw new EntityNotFoundException("Contact non trouvé pour cet utilisateur");
         }
+        
 
         repository.deleteById(id);
     }

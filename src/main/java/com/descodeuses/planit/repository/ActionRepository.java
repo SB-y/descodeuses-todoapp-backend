@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.descodeuses.planit.entity.ActionEntity;
+import com.descodeuses.planit.entity.ProjetEntity;
 import com.descodeuses.planit.entity.UtilisateurEntity;
 
 
@@ -18,4 +19,5 @@ public interface ActionRepository extends JpaRepository<ActionEntity, Long> {
 // pas besoin de définir des méthodes donc ActionRepository est une interface
 
 List<ActionEntity> findByUtilisateur(UtilisateurEntity utilisateur);
+List<ActionEntity> findByProjet(ProjetEntity projet);
 }
