@@ -1,3 +1,10 @@
+// Service qui gère la logique métier pour les actions (tâches)
+// - CRUD complet (Create, Read, Update, Delete)
+// - Conversion entre entités et DTO
+// - Vérifie et rattache projets, contacts et utilisateur connecté
+
+
+
 // Déclare que cette classe fait partie du package "service"
 package com.descodeuses.planit.service;
 
@@ -12,8 +19,10 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 // Import pour gérer l'authentification Spring Security
 import org.springframework.security.core.Authentication;
+
 // Indique à Spring que c’est un service (injectable)
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;

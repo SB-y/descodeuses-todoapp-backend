@@ -1,11 +1,16 @@
 package com.descodeuses.planit.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -26,6 +31,11 @@ public class ProjetEntity {
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
     private UtilisateurEntity utilisateur;
+
+    // Membres assignés au projet
+    @ManyToMany
+    @JoinTable(name = "projet_membres", joinColumns = @JoinColumn(name = "projet_id"), inverseJoinColumns = @JoinColumn(name = "utilisateur_id"))
+    private Set<UtilisateurEntity> membres = new HashSet<>();
 
     // Constructeur à vide
     public ProjetEntity() {

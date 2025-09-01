@@ -1,3 +1,14 @@
+// Contrôleur REST qui gère les opérations sur les actions (tâches).
+// Fonctionnalités :
+// - Récupérer une action par son ID (GET /api/action/{id})
+// - Récupérer toutes les actions de l’utilisateur connecté (GET /api/action)
+// - Créer une nouvelle action (POST /api/action) avec enregistrement d’un log dans MongoDB
+// - Mettre à jour une action existante (PUT /api/action/{id}) avec enregistrement d’un log dans MongoDB
+// - Supprimer une action (DELETE /api/action/{id})
+// Utilise ActionService pour la logique métier et LogDocumentService pour le suivi des actions (logs).
+
+
+
 // Déclaration du package dans lequel se trouve cette classe
 package com.descodeuses.planit.controller;
 

@@ -60,4 +60,8 @@ public class ProjetController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<ProjetDTO>> getMyProjects(Authentication authentication) {
+        return ResponseEntity.ok(service.getMyProjects(authentication));
+    }
 }

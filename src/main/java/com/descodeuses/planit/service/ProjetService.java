@@ -1,8 +1,10 @@
 package com.descodeuses.planit.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
@@ -21,7 +23,6 @@ import jakarta.persistence.EntityNotFoundException;
 public class ProjetService {
 
     private final ActionRepository actionRepository;
-
     private final ProjetRepository repository;
     private final UserService utilisateurService;
 
@@ -123,5 +124,26 @@ public class ProjetService {
         actionRepository.saveAll(actions);
 
         repository.deleteById(id);
+    }
+
+    // Récupère les projets où je suis propriétaire OU membre
+    public List<ProjetDTO> getMyProjects(Authentication authentication) {
+        String username = authentication.getName();
+        UtilisateurEntity utilisateur = utilisateurService.findByUsername(username);
+
+        // Projets où je suis propriétaire
+        List<ProjetEntity> owned = repository.findByUtilisateur(utilisateur);
+
+        // Projets où je suis membre
+        List<ProjetEntity> assigned = repository.findByMembresContaining(utilisateur);
+
+        // Fusionner sans doublons
+        Set<ProjetEntity> all = new HashSet<>();
+        all.addAll(owned);
+        all.addAll(assigned);
+
+        return all.stream()
+                .map(p -> new ProjetDTO(p.getId(), p.getTitle(), p.getDescription()))
+                .toList();
     }
 }

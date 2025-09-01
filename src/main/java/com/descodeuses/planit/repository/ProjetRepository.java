@@ -11,4 +11,5 @@ import com.descodeuses.planit.entity.UtilisateurEntity;
 @Repository
 public interface ProjetRepository extends JpaRepository<ProjetEntity, Long> {
     List<ProjetEntity> findByUtilisateur(UtilisateurEntity utilisateur);
+    List<ProjetEntity> findByMembresContaining(UtilisateurEntity utilisateur); // membre
 }
