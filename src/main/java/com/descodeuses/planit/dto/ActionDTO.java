@@ -20,6 +20,10 @@ public class ActionDTO {
     // contient les objets complets ContactDTO
     private Set<ContactDTO> membres;
 
+    // Utilisateurs assignés
+    private Set<Long> assignedUserIds;          // IDs des utilisateurs assignés (POST/PUT)
+    private Set<UtilisateurDTO> utilisateursAssignes; // Détails utilisateurs assignés (GET)
+
     private Long projetId;
     private ProjetDTO projet;
 
@@ -112,6 +116,24 @@ public class ActionDTO {
         this.memberIds = memberIds;
     }
 
+
+
+    public Set<Long> getAssignedUserIds() 
+    { return assignedUserIds; }
+
+    public void setAssignedUserIds(Set<Long> assignedUserIds) 
+    { this.assignedUserIds = assignedUserIds; }
+
+    public Set<UtilisateurDTO> getUtilisateursAssignes() 
+    { return utilisateursAssignes; }
+
+    public void setUtilisateursAssignes(Set<UtilisateurDTO> utilisateursAssignes) 
+    { this.utilisateursAssignes = utilisateursAssignes; }
+
+
+
+
+    
     public Long getProjetId() {
         return projetId;
     }

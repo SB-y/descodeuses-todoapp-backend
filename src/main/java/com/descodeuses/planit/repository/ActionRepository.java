@@ -20,4 +20,6 @@ public interface ActionRepository extends JpaRepository<ActionEntity, Long> {
 
 List<ActionEntity> findByUtilisateur(UtilisateurEntity utilisateur);
 List<ActionEntity> findByProjet(ProjetEntity projet);
+// Tâches où l'utilisateur est assigné
+List<ActionEntity> findByUtilisateursAssignesContaining(UtilisateurEntity utilisateur);
 }

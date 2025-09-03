@@ -7,8 +7,6 @@
 // - Supprimer une action (DELETE /api/action/{id})
 // Utilise ActionService pour la logique métier et LogDocumentService pour le suivi des actions (logs).
 
-
-
 // Déclaration du package dans lequel se trouve cette classe
 package com.descodeuses.planit.controller;
 
@@ -52,13 +50,15 @@ public class ActionController {
     private final ActionService service;
     private final UserService userService;
 
-    // Constructeur avec injection du service (Spring injecte automatiquement la dépendance)
+    // Constructeur avec injection du service (Spring injecte automatiquement la
+    // dépendance)
     public ActionController(ActionService service, UserService userService) {
         this.service = service;
         this.userService = userService;
     }
 
-    // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération d’une action par son id
+    // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération
+    // d’une action par son id
     @GetMapping("/{id}")
     public ResponseEntity<ActionDTO> getActionById(@PathVariable Long id) {
         // Appel du service pour récupérer l’action correspondant à l’id
@@ -72,7 +72,8 @@ public class ActionController {
     }
 
     /*
-     * // Méthode pour gérer les requêtes GET vers /api/action : récupération de toutes les actions
+     * // Méthode pour gérer les requêtes GET vers /api/action : récupération de
+     * toutes les actions
      * 
      * @GetMapping
      * public ResponseEntity<List<ActionDTO>> getAll() {
@@ -91,13 +92,15 @@ public class ActionController {
         return new ResponseEntity<>(actionsDTO, HttpStatus.OK);
     }
 
-    // Méthode pour gérer les requêtes POST vers /api/action : création d’une nouvelle action
+    // Méthode pour gérer les requêtes POST vers /api/action : création d’une
+    // nouvelle action
     @Autowired
     private LogDocumentService logDocumentService;
 
     @PostMapping
-    public ResponseEntity<ActionDTO> create(@RequestBody ActionDTO newDTO,Authentication authentication, HttpServletRequest request) {
-        
+    public ResponseEntity<ActionDTO> create(@RequestBody ActionDTO newDTO, Authentication authentication,
+            HttpServletRequest request) {
+
         // Création de l'action
         ActionDTO createdDTO = service.create(newDTO, authentication);
 
@@ -108,12 +111,14 @@ public class ActionController {
         return new ResponseEntity<>(createdDTO, HttpStatus.CREATED);
     }
 
-    // Méthode pour gérer les requêtes PUT vers /api/action/{id} : mise à jour d’une action existante
+    // Méthode pour gérer les requêtes PUT vers /api/action/{id} : mise à jour d’une
+    // action existante
     @PutMapping("/{id}")
     public ResponseEntity<ActionDTO> update(@PathVariable Long id, @RequestBody ActionDTO dto,
             Authentication authentication, HttpServletRequest request) {
 
-        // Appel du service pour mettre à jour l’action identifiée par l’id avec les nouvelles données
+        // Appel du service pour mettre à jour l’action identifiée par l’id avec les
+        // nouvelles données
         ActionDTO updated = service.update(id, dto, authentication);
 
         // Logging de l'action créée dans MangoDB
@@ -123,15 +128,24 @@ public class ActionController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    // Méthode pour gérer les requêtes DELETE vers /api/action/{id} : suppression d’une action
+    // Méthode pour gérer les requêtes DELETE vers /api/action/{id} : suppression
+    // d’une action
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
         // Appel du service pour supprimer l’action identifiée par l’id
         service.delete(id);
-        
-        // Renvoi d’une réponse sans contenu avec un statut HTTP 204 No Content au client
+
+        // Renvoi d’une réponse sans contenu avec un statut HTTP 204 No Content au
+        // client
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // Récupère toutes les tâches où l’utilisateur connecté a été assigné
+    @GetMapping("/assigned-to-me")
+    public ResponseEntity<List<ActionDTO>> getAssignedToMe(Authentication authentication) {
+        List<ActionDTO> tasks = service.getAssignedToMe(authentication);
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
     }
 
 }

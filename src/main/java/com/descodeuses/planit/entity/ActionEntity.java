@@ -60,19 +60,15 @@ public class ActionEntity {
         this.members = members;
     }
 
-    
-    
     // pour la relation plusieurs taches pour un projet
     @ManyToOne(optional = true)
     @JoinColumn(name = "projet_id", nullable = true)
     private ProjetEntity projet;
 
-
     // pour la relation un user pour plusieurs taches
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
     private UtilisateurEntity utilisateur;
-
 
     private String title;
 
@@ -161,6 +157,17 @@ public class ActionEntity {
         this.utilisateur = utilisateur;
     }
 
+    // Nouvel attribut : utilisateurs assignés à la tâche
+    @ManyToMany
+    @JoinTable(name = "todo_utilisateur_assigne", joinColumns = @JoinColumn(name = "todo_id"), inverseJoinColumns = @JoinColumn(name = "utilisateur_id"))
+    private Set<UtilisateurEntity> utilisateursAssignes = new HashSet<>();
 
+    public Set<UtilisateurEntity> getUtilisateursAssignes() {
+        return utilisateursAssignes;
+    }
+
+    public void setUtilisateursAssignes(Set<UtilisateurEntity> utilisateursAssignes) {
+        this.utilisateursAssignes = utilisateursAssignes;
+    }
 
 }

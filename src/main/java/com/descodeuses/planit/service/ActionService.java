@@ -3,8 +3,6 @@
 // - Conversion entre entités et DTO
 // - Vérifie et rattache projets, contacts et utilisateur connecté
 
-
-
 // Déclare que cette classe fait partie du package "service"
 package com.descodeuses.planit.service;
 
@@ -31,7 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.descodeuses.planit.dto.ActionDTO;
 import com.descodeuses.planit.dto.ContactDTO;
 import com.descodeuses.planit.dto.ProjetDTO;
-
+import com.descodeuses.planit.dto.UtilisateurDTO;
 // Imports des entités JPA
 import com.descodeuses.planit.entity.ActionEntity;
 import com.descodeuses.planit.entity.ContactEntity;
@@ -94,6 +92,24 @@ public class ActionService {
                 .collect(Collectors.toSet());
         dto.setMembres(membresDto);
 
+        // Récupère les ids des utilisateurs assignés à une tache
+        Set<Long> assignedIds = action.getUtilisateursAssignes()
+                .stream().map(UtilisateurEntity::getId).collect(Collectors.toSet());
+        dto.setAssignedUserIds(assignedIds);
+
+        Set<UtilisateurDTO> assignedUsersDto = action.getUtilisateursAssignes().stream()
+        .map(u -> {
+            UtilisateurDTO dtoUser = new UtilisateurDTO();
+            dtoUser.setId(u.getId());
+            dtoUser.setName(u.getName());
+            dtoUser.setSurname(u.getSurname());
+            dtoUser.setUsername(u.getUsername());
+            dtoUser.setGenre(u.getGenre());
+            return dtoUser;
+        })
+        .collect(Collectors.toSet());
+dto.setUtilisateursAssignes(assignedUsersDto);
+
         // Si un projet est associé, on remplit le DTO projet
         if (action.getProjet() != null) {
             ProjetEntity projet = action.getProjet();
@@ -126,6 +142,12 @@ public class ActionService {
         action.setMembers(members);
         action.setProjet(projet);
         action.setUtilisateur(utilisateur);
+
+        // On associe les utilisateurs assignés à cette tâche
+        if (actionDTO.getAssignedUserIds() != null && !actionDTO.getAssignedUserIds().isEmpty()) {
+            Set<UtilisateurEntity> assignedUsers = new HashSet<>(utilisateurRepository.findAllById(actionDTO.getAssignedUserIds()));
+            action.setUtilisateursAssignes(assignedUsers);
+        }
 
         return action;
     }
@@ -238,6 +260,15 @@ public class ActionService {
             existingEntity.setProjet(projet);
         }
 
+        // Met à jour les utilisateurs assignés
+        if (dto.getAssignedUserIds() != null) {
+            Set<UtilisateurEntity> assignedUsers = new HashSet<>(
+                    utilisateurRepository.findAllById(dto.getAssignedUserIds()));
+            existingEntity.setUtilisateursAssignes(assignedUsers);
+        } else {
+            existingEntity.setUtilisateursAssignes(new HashSet<>()); // vide si rien envoyé
+        }
+
         // Récupérer utilisateur connecté et l’assigner
         String username = authentication.getName();
         UtilisateurEntity utilisateur = userService.findByUsername(username);
@@ -255,5 +286,16 @@ public class ActionService {
         }
 
         repository.deleteById(id); // suppression simple
+    }
+
+    public List<ActionDTO> getAssignedToMe(Authentication authentication) {
+        String username = authentication.getName();
+        UtilisateurEntity utilisateur = userService.findByUsername(username);
+
+        List<ActionEntity> actions = repository.findByUtilisateursAssignesContaining(utilisateur);
+
+        return actions.stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 }
