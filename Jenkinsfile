@@ -3,63 +3,71 @@ pipeline {
 
     environment {
         DOCKER_CMD = "docker"
-        IMAGE_NAME = "planit-test"
+        IMAGE_NAME = "planit-full"
         FRONT_PORT = "5500"
         BACK_PORT = "8090"
     }
 
     stages {
-        stage('1️⃣ Checkout code') {
+        stage('1️⃣ Checkout backend') {
             steps {
-                echo "📥 Récupération du dépôt..."
+                echo "📥 Clonage du dépôt backend..."
                 checkout scm
             }
         }
 
-        stage('2️⃣ Construire l’image Docker') {
+        stage('2️⃣ Checkout frontend') {
             steps {
-                echo "🏗️ Construction de l’image Docker..."
-                dir('planit') {
-                    sh "${DOCKER_CMD} build -t ${IMAGE_NAME} -f cicd/Dockerfile ."
-                }
+                echo "📥 Clonage du dépôt frontend..."
+                sh "git clone https://github.com/SB-y/descodeuses-todo-list-app.git descodeuses-app"
             }
         }
 
-        stage('3️⃣ Lancer le conteneur') {
+        stage('3️⃣ Build Docker image (Front + Back)') {
             steps {
-                echo "🐳 Démarrage du conteneur Docker..."
+                echo "🏗️ Construction de l’image Docker complète..."
+                sh "${DOCKER_CMD} build -t ${IMAGE_NAME} -f cicd/Dockerfile ."
+            }
+        }
+
+        stage('4️⃣ Run container') {
+            steps {
+                echo "🐳 Démarrage du conteneur..."
                 sh """
-                    ${DOCKER_CMD} rm -f planit-test || true
-                    ${DOCKER_CMD} run -d --name planit-test -p ${BACK_PORT}:8081 -p ${FRONT_PORT}:5000 ${IMAGE_NAME}
+                    ${DOCKER_CMD} rm -f ${IMAGE_NAME} || true
+                    ${DOCKER_CMD} run -d --name ${IMAGE_NAME} \
+                        -p ${BACK_PORT}:8081 -p ${FRONT_PORT}:5000 ${IMAGE_NAME}
                 """
+                echo "🌐 Frontend → http://localhost:${FRONT_PORT}"
+                echo "⚙️ Backend → http://localhost:${BACK_PORT}"
             }
         }
 
-        stage('4️⃣ Lancer les tests Selenium') {
+        stage('5️⃣ Run Selenium tests') {
             steps {
-                echo "🧪 Exécution des tests Selenium..."
-                dir('back_planit/selenium') {
+                echo "🧪 Lancement des tests Selenium..."
+                dir('selenium') {
                     sh "npm ci"
                     sh "node test.js"
                 }
             }
         }
 
-        stage('5️⃣ Nettoyage') {
+        stage('6️⃣ Nettoyage') {
             steps {
                 echo "🧹 Arrêt du conteneur..."
-                sh "${DOCKER_CMD} stop planit-test || true"
+                sh "${DOCKER_CMD} stop ${IMAGE_NAME} || true"
             }
         }
     }
 
     post {
         success {
-            echo "🎉 Pipeline exécuté avec succès !"
+            echo "🎉 Pipeline complète exécutée avec succès !"
         }
         failure {
             echo "❌ Le pipeline a échoué."
-            sh "${DOCKER_CMD} logs planit-test || true"
+            sh "${DOCKER_CMD} logs ${IMAGE_NAME} || true"
         }
     }
 }
