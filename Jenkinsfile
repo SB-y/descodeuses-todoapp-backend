@@ -5,7 +5,7 @@ pipeline {
         DOCKER_CMD = "docker"
         IMAGE_NAME = "planit-full"
         FRONT_PORT = "5500"
-        BACK_PORT = "8090"
+        BACK_PORT = "8081"
     }
 
     stages {
