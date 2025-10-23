@@ -105,7 +105,12 @@ public class ActionController {
         ActionDTO createdDTO = service.create(newDTO, authentication);
 
         // Logging de l'action créée dans MangoDB
-        logDocumentService.addLog("Action created", request, createdDTO);
+        try {
+            logDocumentService.addLog("Action created", request, createdDTO);
+        } catch (Exception e) {
+            System.err.println("⚠️ Impossible d'enregistrer le log MongoDB : " + e.getMessage());
+        }
+        
 
         // Retour de l'action avec statut 201
         return new ResponseEntity<>(createdDTO, HttpStatus.CREATED);
@@ -122,7 +127,11 @@ public class ActionController {
         ActionDTO updated = service.update(id, dto, authentication);
 
         // Logging de l'action créée dans MangoDB
-        logDocumentService.addLog("Action updated", request, updated);
+        try {
+            logDocumentService.addLog("Action updated", request, updated);
+        } catch (Exception e) {
+            System.err.println("⚠️ Impossible d'enregistrer le log MongoDB : " + e.getMessage());
+        }
 
         // Renvoi de l’action mise à jour avec un statut HTTP 200 OK
         return new ResponseEntity<>(updated, HttpStatus.OK);

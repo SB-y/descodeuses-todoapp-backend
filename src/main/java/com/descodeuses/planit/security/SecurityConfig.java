@@ -52,7 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll() // Autorise les requêtes non authentifiées vers //
                                                                  // /auth/**
-                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN") // Nécessite un rôle USER ou ADMIN pour
+                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
+                        // Nécessite un rôle USER ou ADMIN pour
                                                                                 // /api/**
                         .anyRequest().authenticated() // Toutes les autres requêtes doivent être authentifiées
                 )
