@@ -5,7 +5,12 @@ pipeline {
         DOCKER_CMD = "docker"
         IMAGE_NAME = "planit-full"
         FRONT_PORT = "5500"
-        BACK_PORT = "8081"
+        BACK_PORT = "8090"
+    }
+
+    options {
+        ansiColor('xterm')        // Affichage coloré dans la console Jenkins
+        timestamps()              // Ajoute les horodatages
     }
 
     stages {
@@ -26,20 +31,23 @@ pipeline {
         stage('3️⃣ Build Docker image (Front + Back)') {
             steps {
                 echo "🏗️ Construction de l’image Docker complète..."
-                sh "${DOCKER_CMD} build -t ${IMAGE_NAME} -f cicd/Dockerfile ."
+                sh """
+                    ${DOCKER_CMD} builder prune -f
+                    ${DOCKER_CMD} build --progress=plain -t ${IMAGE_NAME} -f planit/cicd/Dockerfile .
+                """
             }
         }
 
         stage('4️⃣ Run container') {
             steps {
-                echo "🐳 Démarrage du conteneur..."
+                echo "🐳 Démarrage du conteneur ${IMAGE_NAME}..."
                 sh """
                     ${DOCKER_CMD} rm -f ${IMAGE_NAME} || true
                     ${DOCKER_CMD} run -d --name ${IMAGE_NAME} \
                         -p ${BACK_PORT}:8081 -p ${FRONT_PORT}:5000 ${IMAGE_NAME}
                 """
-                echo "🌐 Frontend → http://localhost:${FRONT_PORT}"
-                echo "⚙️ Backend → http://localhost:${BACK_PORT}"
+                echo "🌐 Frontend disponible sur : http://localhost:${FRONT_PORT}"
+                echo "⚙️ Backend disponible sur : http://localhost:${BACK_PORT}"
             }
         }
 
@@ -55,18 +63,22 @@ pipeline {
 
         stage('6️⃣ Nettoyage') {
             steps {
-                echo "🧹 Arrêt du conteneur..."
-                sh "${DOCKER_CMD} stop ${IMAGE_NAME} || true"
+                echo "🧹 Nettoyage des ressources Docker..."
+                sh """
+                    ${DOCKER_CMD} stop ${IMAGE_NAME} || true
+                    ${DOCKER_CMD} rm ${IMAGE_NAME} || true
+                    ${DOCKER_CMD} system prune -f
+                """
             }
         }
     }
 
     post {
         success {
-            echo "🎉 Pipeline complète exécutée avec succès !"
+            echo "🎉 Pipeline terminée avec succès !"
         }
         failure {
-            echo "❌ Le pipeline a échoué."
+            echo "❌ Le pipeline a échoué. Voici les logs du conteneur :"
             sh "${DOCKER_CMD} logs ${IMAGE_NAME} || true"
         }
     }
