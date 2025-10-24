@@ -5,7 +5,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async function example() {
     let driver = await new Builder()
         .forBrowser('chrome')
-        .setChromeOptions(new chrome.Options())
+        .setChromeOptions(
+            new chrome.Options()
+                .addArguments('--headless')
+                .addArguments('--no-sandbox')
+                .addArguments('--disable-dev-shm-usage')
+                .addArguments('--window-size=1920,1080')
+        )
         .build();
 
     try {
