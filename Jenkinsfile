@@ -8,11 +8,6 @@ pipeline {
         BACK_PORT = "8090"
     }
 
-    options {
-        ansiColor('xterm')
-        timestamps()
-    }
-
     stages {
         stage('1️⃣ Checkout backend') {
             steps {
