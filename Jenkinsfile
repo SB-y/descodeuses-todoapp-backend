@@ -9,8 +9,8 @@ pipeline {
     }
 
     options {
-        ansiColor('xterm')        // Affichage coloré dans la console Jenkins
-        timestamps()              // Ajoute les horodatages
+        ansiColor('xterm')
+        timestamps()
     }
 
     stages {
@@ -33,7 +33,7 @@ pipeline {
                 echo "🏗️ Construction de l’image Docker complète..."
                 sh """
                     ${DOCKER_CMD} builder prune -f
-                    ${DOCKER_CMD} build --progress=plain -t ${IMAGE_NAME} -f planit/cicd/Dockerfile .
+                    ${DOCKER_CMD} build --pull --progress=plain -t ${IMAGE_NAME} -f cicd/Dockerfile .
                 """
             }
         }
@@ -54,7 +54,7 @@ pipeline {
         stage('5️⃣ Run Selenium tests') {
             steps {
                 echo "🧪 Lancement des tests Selenium..."
-                dir('selenium') {
+                dir('cicd/selenium') {
                     sh "npm ci"
                     sh "node test.js"
                 }
