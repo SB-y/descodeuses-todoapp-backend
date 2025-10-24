@@ -8,6 +8,10 @@ pipeline {
         BACK_PORT = "8090"
     }
 
+    options {
+        timestamps() // pour des logs horodatés
+    }
+
     stages {
         stage('1️⃣ Checkout backend') {
             steps {
@@ -19,7 +23,11 @@ pipeline {
         stage('2️⃣ Checkout frontend') {
             steps {
                 echo "📥 Clonage du dépôt frontend..."
-                sh "git clone https://github.com/SB-y/descodeuses-todo-list-app.git descodeuses-app"
+                sh """
+                    echo '🧹 Nettoyage ancien dossier frontend (si présent)...'
+                    rm -rf descodeuses-app
+                    git clone https://github.com/SB-y/descodeuses-todo-list-app.git descodeuses-app
+                """
             }
         }
 
@@ -50,8 +58,10 @@ pipeline {
             steps {
                 echo "🧪 Lancement des tests Selenium..."
                 dir('cicd/selenium') {
-                    sh "npm ci"
-                    sh "node test.js"
+                    sh """
+                        npm ci
+                        node test.js
+                    """
                 }
             }
         }
