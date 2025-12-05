@@ -88,7 +88,7 @@ public class ActionService {
         // Récupère les infos complètes des membres (pour affichage)
         Set<ContactDTO> membresDto = action.getMembers().stream()
                 .map(c -> new ContactDTO(
-                        c.getId(), c.getPrenom(), c.getNom(), c.getEmail(), c.getTel()))
+                        c.getId(), c.getNom(), c.getPrenom(), c.getEmail(), c.getTel()))
                 .collect(Collectors.toSet());
         dto.setMembres(membresDto);
 
@@ -98,17 +98,17 @@ public class ActionService {
         dto.setAssignedUserIds(assignedIds);
 
         Set<UtilisateurDTO> assignedUsersDto = action.getUtilisateursAssignes().stream()
-        .map(u -> {
-            UtilisateurDTO dtoUser = new UtilisateurDTO();
-            dtoUser.setId(u.getId());
-            dtoUser.setName(u.getName());
-            dtoUser.setSurname(u.getSurname());
-            dtoUser.setUsername(u.getUsername());
-            dtoUser.setGenre(u.getGenre());
-            return dtoUser;
-        })
-        .collect(Collectors.toSet());
-dto.setUtilisateursAssignes(assignedUsersDto);
+                .map(u -> {
+                    UtilisateurDTO dtoUser = new UtilisateurDTO();
+                    dtoUser.setId(u.getId());
+                    dtoUser.setName(u.getName());
+                    dtoUser.setSurname(u.getSurname());
+                    dtoUser.setUsername(u.getUsername());
+                    dtoUser.setGenre(u.getGenre());
+                    return dtoUser;
+                })
+                .collect(Collectors.toSet());
+        dto.setUtilisateursAssignes(assignedUsersDto);
 
         // Si un projet est associé, on remplit le DTO projet
         if (action.getProjet() != null) {
@@ -145,7 +145,8 @@ dto.setUtilisateursAssignes(assignedUsersDto);
 
         // On associe les utilisateurs assignés à cette tâche
         if (actionDTO.getAssignedUserIds() != null && !actionDTO.getAssignedUserIds().isEmpty()) {
-            Set<UtilisateurEntity> assignedUsers = new HashSet<>(utilisateurRepository.findAllById(actionDTO.getAssignedUserIds()));
+            Set<UtilisateurEntity> assignedUsers = new HashSet<>(
+                    utilisateurRepository.findAllById(actionDTO.getAssignedUserIds()));
             action.setUtilisateursAssignes(assignedUsers);
         }
 
@@ -181,17 +182,40 @@ dto.setUtilisateursAssignes(assignedUsersDto);
                 .collect(Collectors.toList());
     }
 
-    // Récupère une seule action par son ID
-    public ActionDTO getActionById(Long id) {
-        Optional<ActionEntity> action = repository.findById(id);
+    // Récupère une seule action par son ID seulement pour l'utilisateur à l'origine et l'utilisateur assigné
+    public ActionDTO getActionById(Long id, Authentication authentication) {
+        String username = authentication.getName();
+        UtilisateurEntity currentUser = userService.findByUsername(username);
 
-        if (action.isEmpty()) {
-            throw new EntityNotFoundException("Action not found with id: " + id);
+        // Récupération de la tâche
+        ActionEntity action = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Tâche introuvable"));
+
+        // Vérifie si le user est propriétaire OU assigné
+        boolean isOwner = action.getUtilisateur().getId().equals(currentUser.getId());
+        boolean isAssigned = action.getUtilisateursAssignes().stream()
+                .anyMatch(u -> u.getId().equals(currentUser.getId()));
+
+        if (!isOwner && !isAssigned) {
+            throw new SecurityException("Accès refusé : vous n’êtes pas autorisé à consulter cette tâche.");
         }
 
-        ActionEntity entity = action.get();
-        return convertToDTO(entity);
+        return convertToDTO(action);
     }
+
+    /*
+     * // Récupère une seule action par son ID
+     * public ActionDTO getActionById(Long id) {
+     * Optional<ActionEntity> action = repository.findById(id);
+     * 
+     * if (action.isEmpty()) {
+     * throw new EntityNotFoundException("Action not found with id: " + id);
+     * }
+     * 
+     * ActionEntity entity = action.get();
+     * return convertToDTO(entity);
+     * }
+     */
 
     // Crée une nouvelle action à partir d’un DTO
     public ActionDTO create(ActionDTO dto, Authentication authentication) {
@@ -233,10 +257,12 @@ dto.setUtilisateursAssignes(assignedUsersDto);
 
     // Met à jour une action existante
     public ActionDTO update(Long id, ActionDTO dto, Authentication authentication) {
-        System.out.println("Appel de la méthode update avec id = " + id);
-        // Récupère l’action existante, ou lève une exception
-        ActionEntity existingEntity = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Action not found with id: " + id));
+        // Récupérer utilisateur connecté et l’assigner
+        String username = authentication.getName();
+
+        // Recherche sécurisée : uniquement si la tâche appartient à l'utilisateur connecté
+        ActionEntity existingEntity = repository.findByIdAndUtilisateurUsername(id, username)
+                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à modifier cette tâche."));
 
         // Met à jour les champs modifiables
         existingEntity.setTitle(dto.getTitle());
@@ -270,23 +296,35 @@ dto.setUtilisateursAssignes(assignedUsersDto);
         }
 
         // Récupérer utilisateur connecté et l’assigner
-        String username = authentication.getName();
-        UtilisateurEntity utilisateur = userService.findByUsername(username);
-        existingEntity.setUtilisateur(utilisateur);
+        // String username = authentication.getName();
+        // UtilisateurEntity utilisateur = userService.findByUsername(username);
+        // existingEntity.setUtilisateur(utilisateur);
 
         // Enregistre l'entité modifiée
         ActionEntity updatedEntity = repository.save(existingEntity);
         return convertToDTO(updatedEntity);
     }
 
-    // Supprime une action selon son ID
-    public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Action not found with id: " + id);
-        }
+    public void delete(Long id, Authentication authentication) {
+        String username = authentication.getName();
 
-        repository.deleteById(id); // suppression simple
+        // Seul le propriétaire de la tâche peut la supprimer
+        ActionEntity entity = repository.findByIdAndUtilisateurUsername(id, username)
+                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à supprimer cette tâche."));
+
+        repository.delete(entity);
     }
+
+    /*
+     * // Supprime une action selon son ID
+     * public void delete(Long id) {
+     * if (!repository.existsById(id)) {
+     * throw new EntityNotFoundException("Tache introuvable avec l'id : " + id);
+     * }
+     * 
+     * repository.deleteById(id); // suppression simple
+     * }
+     */
 
     public List<ActionDTO> getAssignedToMe(Authentication authentication) {
         String username = authentication.getName();

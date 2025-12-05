@@ -1,4 +1,3 @@
-
 package com.descodeuses.planit.security;
 
 import java.util.List;
@@ -7,89 +6,117 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Bon choix pour le hachage des mots de passe
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter; // Import clé pour une gestion CORS robuste
 
-@Configuration // Indique que cette classe contient des configurations Spring
-@EnableWebSecurity // Active la sécurité Web avec Spring Security
+@Configuration // Indique à Spring que cette classe contient des définitions de beans
+@EnableWebSecurity // Active l'intégration de Spring Security
 public class SecurityConfig {
 
-    // Injection du filtre JWT personnalisé
     @Autowired
-    private JwtFilter jwtFilter;
+    private JwtFilter jwtFilter; // Filtre personnalisé qui va valider le JWT dans les requêtes
 
-    // Valeur à changer dans application.properties en fonction de l'environnement
-    // (en local, en ligne)
     @Value("${allowCorsOrigin}")
-    private String allowCorsOrigin;
+    private String allowCorsOrigin; // Configuration des origines autorisées depuis application.properties. Bon pour
+                                    // la production.
 
-    // Bean pour exposer un AuthenticationManager, utile pour l'authentification
+    // ------------- AUTH MANAGER ------------
+    /**
+     * Expose l'AuthenticationManager comme un Bean.
+     * Il est nécessaire pour l'authentification (e.g., dans le service
+     * d'authentification)
+     * pour vérifier les identifiants utilisateur (username/password).
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    // Configuration de la chaîne de filtres de sécurité
+    // ------------- CORS GLOBAL ET ROBUSTE ------------
+    /**
+     * Définit un filtre CORS global. C'est la méthode recommandée pour les API
+     * REST.
+     * Le CorsFilter est exécuté très tôt dans la chaîne, ce qui assure que les
+     * requêtes
+     * preflight (OPTIONS) sont gérées correctement avant toute vérification de
+     * sécurité.
+     */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource)
-            throws Exception {
-        http
-                .csrf(csrf -> csrf.disable()) // Désactive la protection CSRF (inutile avec JWT car stateless)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Active la configuration CORS
-                .authorizeHttpRequests(auth -> auth
-                        // Autoriser toutes les requêtes OPTIONS (préflight CORS)
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll() // Autorise les requêtes non authentifiées vers //
-                                                                 // /auth/**
-                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
-                        // Nécessite un rôle USER ou ADMIN pour
-                                                                                // /api/**
-                        .anyRequest().authenticated() // Toutes les autres requêtes doivent être authentifiées
-                )
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        // Déclare que l'application ne maintient pas de session (stateless)
+    public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
 
-        // Ajoute le filtre JWT avant le filtre d'authentification par défaut
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        config.setAllowCredentials(true); // Autorise l'envoi de cookies/headers d'authentification
+        config.setAllowedOrigins(List.of(allowCorsOrigin.split(","))); // Liste des origines autorisées (votre frontend
+                                                                       // Angular)
+        config.addAllowedHeader("*"); // Autorise tous les headers
+        config.addAllowedMethod("*"); // Autorise toutes les méthodes HTTP (GET, POST, PUT, DELETE, OPTIONS, etc.)
 
-        return http.build(); // Construit la chaîne de filtres
+        source.registerCorsConfiguration("/**", config); // Applique cette configuration à toutes les routes
+        return new CorsFilter(source);
     }
 
-    // Bean pour encoder les mots de passe avec l'algorithme BCrypt (très sécurisé)
+    // ------------- SECURITY ------------
+    /**
+     * Définit la chaîne de filtres de sécurité. C'est le cœur de la configuration.
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        http
+                // 1. Désactive CSRF : Très bonne pratique pour les API sans état (stateless)
+                // utilisant JWT, car le token n'est pas stocké en session (évitant la faille
+                // CSRF classique).
+                .csrf(csrf -> csrf.disable())
+
+                // 2. Désactive la gestion CORS interne de Spring Security :
+                // C'est logique car on gère le CORS via le CorsFilter global défini plus haut.
+                .cors(cors -> cors.disable())
+
+                // 3. Configuration de l'autorisation des requêtes.
+                .authorizeHttpRequests(auth -> auth
+                        // Autorise explicitement toutes les requêtes preflight OPTIONS sans
+                        // authentification.
+                        // C'est vital pour le bon fonctionnement de CORS.
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Autorise l'accès aux routes d'authentification (login, inscription) sans JWT.
+                        .requestMatchers("/auth/**").permitAll()
+
+                        // Exige le rôle USER ou ADMIN pour accéder à toutes les routes de l'API.
+                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
+
+                        // Toutes les autres requêtes doivent être authentifiées par un JWT valide.
+                        .anyRequest().authenticated())
+                // 4. Gestion de Session : Définit la politique comme sans état.
+                // Essentiel pour JWT car le token porte toutes les infos d'authentification.
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // 5. Ajout du Filtre JWT : S'assure que notre filtre de vérification du JWT
+        // est exécuté avant le filtre standard d'authentification par nom
+        // d'utilisateur/mot de passe.
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build(); // Construction de la chaîne de filtres
+    }
+
+    /**
+     * Définit l'encodeur de mot de passe à utiliser.
+     * BCrypt est le standard de l'industrie pour le hachage sécurisé.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    // Configuration du CORS pour autoriser les appels depuis le frontend Angular
-    @Bean
-    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        // split la chaîne en liste d'origines
-        //List<String> allowedOrigins = List.of(allowCorsOrigin.split(","));
-        config.setAllowedOrigins(List.of(allowCorsOrigin.split(",")));
-       
-        // Méthodes HTTP autorisées
-        config.setAllowedMethods(List.of("*"));
-        
-        config.setAllowedHeaders(List.of("*")); // Autorise tous les headers
-        config.setAllowCredentials(true); // Autorise les cookies et les headers d’authentification
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config); // Applique cette configuration à toutes les routes
-        return source;
-    }
-
 }

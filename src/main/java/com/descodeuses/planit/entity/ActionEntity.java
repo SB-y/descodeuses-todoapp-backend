@@ -157,7 +157,7 @@ public class ActionEntity {
         this.utilisateur = utilisateur;
     }
 
-    // Nouvel attribut : utilisateurs assignés à la tâche
+    // Utilisateurs assignés à la tâche
     @ManyToMany
     @JoinTable(name = "todo_utilisateur_assigne", joinColumns = @JoinColumn(name = "todo_id"), inverseJoinColumns = @JoinColumn(name = "utilisateur_id"))
     private Set<UtilisateurEntity> utilisateursAssignes = new HashSet<>();

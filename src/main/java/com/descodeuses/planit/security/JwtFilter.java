@@ -1,7 +1,6 @@
 // JwtFilter vérifie chaque requête entrante pour voir si un token JWT est présent 
 //et valide, puis authentifie l'utilisateur si c’est le cas.
 
-
 package com.descodeuses.planit.security;
 
 import java.io.IOException;
@@ -34,12 +33,14 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService; // Pour charger les informations d'un utilisateur
 
-    // Méthode appelée à chaque requête HTTP (filtre exécuté une seule fois par requête)
+    // Méthode appelée à chaque requête HTTP (filtre exécuté une seule fois par
+    // requête)
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        // Ignore les requêtes envoyées aux endpoints d'authentification (ex:/auth/login)
+        // Ignore les requêtes envoyées aux endpoints d'authentification
+        // (ex:/auth/login)
         String path = request.getServletPath();
         if (path.startsWith("/auth/")) {
             filterChain.doFilter(request, response); // Poursuit sans vérification JWT
@@ -57,7 +58,8 @@ public class JwtFilter extends OncePerRequestFilter {
             username = jwtUtil.extractUsername(jwt); // Extrait le nom d'utilisateur du token
         }
 
-        // Si un username est trouvé et qu'aucune auth n'est déjà présente dans le contexte
+        // Si un username est trouvé et qu'aucune auth n'est déjà présente dans le
+        // contexte
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username); // Charge l'utilisateur depuis la
                                                                                        // DB ou mémoire

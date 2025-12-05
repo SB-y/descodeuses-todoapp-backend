@@ -9,6 +9,8 @@ import com.descodeuses.planit.entity.ActionEntity;
 import com.descodeuses.planit.entity.ProjetEntity;
 import com.descodeuses.planit.entity.UtilisateurEntity;
 
+import java.util.Optional;
+
 
 //                            ... extends JpaRepository<TYPE OBJET, TYPE ID OBJET>
 //TYPE OBJET = Action
@@ -22,4 +24,7 @@ List<ActionEntity> findByUtilisateur(UtilisateurEntity utilisateur);
 List<ActionEntity> findByProjet(ProjetEntity projet);
 // Tâches où l'utilisateur est assigné
 List<ActionEntity> findByUtilisateursAssignesContaining(UtilisateurEntity utilisateur);
+
+// Récupère une tâche uniquement si elle appartient à un utilisateur précis
+Optional<ActionEntity> findByIdAndUtilisateurUsername(Long id, String username);
 }

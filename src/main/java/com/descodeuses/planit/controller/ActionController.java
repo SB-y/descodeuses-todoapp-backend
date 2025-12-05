@@ -57,6 +57,15 @@ public class ActionController {
         this.userService = userService;
     }
 
+ // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération
+    // d’une action par son id pour l'utilisateur à l'origine et l'utilisateur assigné
+    @GetMapping("/{id}")
+    public ResponseEntity<ActionDTO> getActionById(@PathVariable Long id, Authentication authentication) {
+        ActionDTO actionDTO = service.getActionById(id, authentication);
+        return new ResponseEntity<>(actionDTO, HttpStatus.OK);
+    }
+
+    /* 
     // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération
     // d’une action par son id
     @GetMapping("/{id}")
@@ -71,7 +80,6 @@ public class ActionController {
         return new ResponseEntity<>(actionDTO, HttpStatus.OK);
     }
 
-    /*
      * // Méthode pour gérer les requêtes GET vers /api/action : récupération de
      * toutes les actions
      * 
@@ -85,12 +93,14 @@ public class ActionController {
      * }
      */
 
+
     // Récupère toutes les actions de l'utilisateur connecté
     @GetMapping
     public ResponseEntity<List<ActionDTO>> getAllForUser(Authentication authentication) {
         List<ActionDTO> actionsDTO = service.getAllByUser(authentication);
         return new ResponseEntity<>(actionsDTO, HttpStatus.OK);
     }
+     
 
     // Méthode pour gérer les requêtes POST vers /api/action : création d’une
     // nouvelle action
@@ -110,7 +120,6 @@ public class ActionController {
         } catch (Exception e) {
             System.err.println("⚠️ Impossible d'enregistrer le log MongoDB : " + e.getMessage());
         }
-        
 
         // Retour de l'action avec statut 201
         return new ResponseEntity<>(createdDTO, HttpStatus.CREATED);
@@ -137,18 +146,28 @@ public class ActionController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    // Méthode pour gérer les requêtes DELETE vers /api/action/{id} : suppression
-    // d’une action
+    // Méthode pour gérer les requêtes DELETE vers /api/action/{id} : suppression d’une action
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
+        // Appel du service pour supprimer l’action identifiée par l’id 
+        service.delete(id, authentication);
 
-        // Appel du service pour supprimer l’action identifiée par l’id
-        service.delete(id);
-
-        // Renvoi d’une réponse sans contenu avec un statut HTTP 204 No Content au
-        // client
+        // Renvoi d’une réponse sans contenu avec un statut HTTP 204 No Content au client
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    /*
+     * @DeleteMapping("/{id}")
+     * public ResponseEntity<Void> delete(@PathVariable Long id) {
+     * 
+     * // Appel du service pour supprimer l’action identifiée par l’id 
+     * service.delete(id);
+     * 
+     * // Renvoi d’une réponse sans contenu avec un statut HTTP 204 No Content au client
+     * return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+     * }
+     */
 
     // Récupère toutes les tâches où l’utilisateur connecté a été assigné
     @GetMapping("/assigned-to-me")

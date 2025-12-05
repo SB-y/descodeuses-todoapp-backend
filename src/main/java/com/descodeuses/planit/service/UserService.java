@@ -20,15 +20,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.descodeuses.planit.dto.UtilisateurDTO;
-
+import com.descodeuses.planit.entity.ActionEntity;
+import com.descodeuses.planit.entity.ProjetEntity;
 // Import de l’entité Utilisateur (celle qui correspond à la table des utilisateurs)
 import com.descodeuses.planit.entity.UtilisateurEntity;
-
+import com.descodeuses.planit.repository.ActionRepository;
+import com.descodeuses.planit.repository.ContactRepository;
+import com.descodeuses.planit.repository.ProjetRepository;
 // Import du repository (interface permettant d'accéder aux utilisateurs en base)
 import com.descodeuses.planit.repository.UtilisateurRepository;
 
 // Exception lancée si l’utilisateur n’est pas trouvé
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 // Indique à Spring que cette classe est un service (composant de la couche métier)
 @Service
@@ -39,10 +43,19 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final ActionRepository actionRepository;
+    private final ContactRepository contactRepository;
+    private final ProjetRepository projetRepository;
+
+
     // Constructeur avec injection du repository (Spring s’en occupe)
-    public UserService(UtilisateurRepository repository, PasswordEncoder passwordEncoder) {
+    public UserService(UtilisateurRepository repository, PasswordEncoder passwordEncoder, ActionRepository actionRepository, ContactRepository contactRepository, ProjetRepository projetRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.actionRepository = actionRepository;
+        this.projetRepository = projetRepository;
+        this.contactRepository = contactRepository;
+
     }
 
     // Méthode publique pour rechercher un utilisateur par son nom d'utilisateur
@@ -116,14 +129,14 @@ public class UserService {
         return convertToDTO(updatedEntity);
     }
 
-    //Récupère utilisateur par id (pour page profil/)
+    // Récupère utilisateur par id (pour page profil/)
     public UtilisateurEntity getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
     }
 
-       //Ajoute utilisateur
-       public void register(UtilisateurEntity user) {
+    // Ajoute utilisateur
+    public void register(UtilisateurEntity user) {
         if (utilisateurRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Utilisateur déjà existant");
         }
@@ -133,12 +146,41 @@ public class UserService {
         utilisateurRepository.save(user);
     }
 
-    // Supprime un utilisateur
+    /*
+     * // Supprime un utilisateur
+     * public void delete(Long id) {
+     * if (!repository.existsById(id)) {
+     * throw new EntityNotFoundException("Projet non trouvé avec id: " + id);
+     * }
+     * repository.deleteById(id);
+     * }
+     */
+
+    @Transactional
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Projet non trouvé avec id: " + id);
+        UtilisateurEntity user = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
+
+        // Retirer l'utilisateur des tâches où il est assigné
+        List<ActionEntity> assignedTasks = actionRepository.findByUtilisateursAssignesContaining(user);
+        for (ActionEntity task : assignedTasks) {
+            task.getUtilisateursAssignes().remove(user);
+            actionRepository.save(task);
         }
-        repository.deleteById(id);
+
+        // Supprimer toutes les tâches dont il est propriétaire
+        List<ActionEntity> ownedTasks = actionRepository.findByUtilisateur(user);
+        actionRepository.deleteAll(ownedTasks);
+
+        // Supprimer tous ses contacts
+        contactRepository.deleteAll(contactRepository.findByUtilisateur(user));
+
+        // Supprimer tous ses projets
+        projetRepository.deleteAll(projetRepository.findByUtilisateur(user));
+
+
+        // Enfin supprimer l’utilisateur
+        utilisateurRepository.delete(user);
     }
 
 }
