@@ -56,8 +56,8 @@ public class UtilisateurEntity {
     // Rôle de l’utilisateur (ex : "ADMIN", "USER")
     private String role;
 
-    private String name; // ou prenom
-    private String surname; // ou nom
+    private String name; 
+    private String surname; 
     private String genre;
 
     // Getter et setter pour `id`
