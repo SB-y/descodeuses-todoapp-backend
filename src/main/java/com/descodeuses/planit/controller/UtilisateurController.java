@@ -8,7 +8,6 @@
 // - Supprimer un utilisateur par son ID (DELETE /api/utilisateur/{id})
 // Utilise UserService pour la logique métier (conversion entité/DTO, accès BDD, etc.).
 
-
 // Déclare le package dans lequel se trouve ce contrôleur
 package com.descodeuses.planit.controller;
 
@@ -21,6 +20,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -65,15 +65,17 @@ public class UtilisateurController {
     // Endpoint GET /api/utilisateur/{id}
     // → Récupère un utilisateur par son ID
     @GetMapping("/{id}")
-    public ResponseEntity<UtilisateurDTO> getUtilisateurById(@PathVariable Long id) {
-        try {
-            UtilisateurEntity utilisateur = userService.getById(id);
-            UtilisateurDTO dto = userService.convertToDTO(utilisateur);
-            return ResponseEntity.ok(dto);
-        } catch (EntityNotFoundException e) {
-            // Retourne 404 si l’utilisateur n’existe pas
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UtilisateurDTO> getUtilisateurById(
+            @PathVariable Long id, // Récupère l'ID dans l'URL
+            Authentication auth) { // Injecte l'utilisateur actuellement authentifié
+
+        // Appelle la version sécurisée du service :
+        // - vérifie que le user existe
+        // - vérifie que l'utilisateur connecté a le droit d'accéder à ce profil
+        // (même utilisateur OU admin)
+        UtilisateurDTO dto = userService.getByIdSecure(id, auth);
+        
+        return ResponseEntity.ok(dto);
     }
 
     // Endpoint PUT /api/utilisateur/monprofil

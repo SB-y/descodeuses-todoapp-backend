@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 // Importation des annotations JPA pour la persistance des données
 import jakarta.persistence.Column; // Permet de configurer les colonnes d'une table
 import jakarta.persistence.Entity; // Indique que cette classe est une entité JPA (liée à une table de BDD)
@@ -16,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table; // Permet de donner un nom spécifique à la table en base de données
 
 // Annotation JPA : cette classe sera une entité (une table)
@@ -170,4 +172,15 @@ public class ActionEntity {
         this.utilisateursAssignes = utilisateursAssignes;
     }
 
+    // Pour pouvoir supprimer une tache pour laquelle il y a des messages rattachés
+    @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
+    public Set<MessageEntity> messages = new HashSet<>();
+
+    public Set<MessageEntity> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(Set<MessageEntity> messages) {
+        this.messages = messages;
+    }
 }

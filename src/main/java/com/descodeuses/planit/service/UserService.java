@@ -1,7 +1,7 @@
 // Gère les opérations métier sur les utilisateurs (CRUD, profil, conversion DTO...).
 //Récupère un utilisateur par son ID ou username
 //Met à jour un profil
-//Supprime un utilisateur
+//Supprime un utilisateur (et avant cela supprimer ses taches, ses contacts, ses projets, ses messages)
 //Convertit entre entité et DTO
 //Gère les rôles et infos personnelles (hors mot de passe généralement)
 //Gère la création d’un nouvel utilisateur (inscription)
@@ -47,9 +47,9 @@ public class UserService {
     private final ContactRepository contactRepository;
     private final ProjetRepository projetRepository;
 
-
     // Constructeur avec injection du repository (Spring s’en occupe)
-    public UserService(UtilisateurRepository repository, PasswordEncoder passwordEncoder, ActionRepository actionRepository, ContactRepository contactRepository, ProjetRepository projetRepository) {
+    public UserService(UtilisateurRepository repository, PasswordEncoder passwordEncoder,
+            ActionRepository actionRepository, ContactRepository contactRepository, ProjetRepository projetRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.actionRepository = actionRepository;
@@ -129,10 +129,27 @@ public class UserService {
         return convertToDTO(updatedEntity);
     }
 
-    // Récupère utilisateur par id (pour page profil/)
+    // Récupère utilisateur par id
     public UtilisateurEntity getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
+    }
+
+
+    // Sécurise les pages profil (accessibles par l'utilisateur concerné et l'admin)
+    public UtilisateurDTO getByIdSecure(Long id, Authentication auth) {
+
+        UtilisateurEntity current = findByUsername(auth.getName());
+        UtilisateurEntity target = getById(id);
+
+        boolean isOwner = current.getId().equals(target.getId());
+        boolean isAdmin = current.getRole().equals("ROLE_ADMIN");
+
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("Vous n'êtes pas autorisé à consulter ce profil.");
+        }
+
+        return convertToDTO(target);
     }
 
     // Ajoute utilisateur
@@ -177,7 +194,6 @@ public class UserService {
 
         // Supprimer tous ses projets
         projetRepository.deleteAll(projetRepository.findByUtilisateur(user));
-
 
         // Enfin supprimer l’utilisateur
         utilisateurRepository.delete(user);
