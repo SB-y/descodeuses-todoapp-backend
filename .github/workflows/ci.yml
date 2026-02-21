@@ -2,7 +2,7 @@ name: CI Backend
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
   pull_request:
     branches: [ main ]
 
@@ -20,4 +20,4 @@ jobs:
           java-version: '17'
 
       - name: Build & Test
-        run: mvn clean test
+        run: mvn clean verify
