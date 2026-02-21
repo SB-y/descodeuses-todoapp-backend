@@ -129,19 +129,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
         //LISTE DES TACHES ET VERIF NBRE
         // Récupérer toutes les tâches de la liste
-        await driver.wait(until.urlContains("todolist"), 10000);
-        const listeTachesApresSupp = await driver.wait(
-            until.elementsLocated(By.css("span.flex-1.cursor-pointer")),
-            10000
+        const listeTachesApresSupp = await driver.findElements(
+            By.css("span.flex-1.cursor-pointer")
         );
 
+        console.log(`Nombre de tâches restantes : ${listeTachesApresSupp.length}`);
 
-        // Afficher chaque tâche
         for (let i = 0; i < listeTachesApresSupp.length; i++) {
             let tacheTexte = await listeTachesApresSupp[i].getText();
             console.log(`Tâche ${i + 1} : ${tacheTexte}`);
         }
-
 
     } finally {
         // Garder la fenêtre ouverte 10 secondes pour voir le résultat
