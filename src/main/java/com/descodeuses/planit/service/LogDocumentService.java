@@ -7,7 +7,6 @@ import java.util.Map;
 
 // Importe les annotations Spring et les classes nécessaires
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 // Importe les DTO et entités nécessaires à la journalisation
