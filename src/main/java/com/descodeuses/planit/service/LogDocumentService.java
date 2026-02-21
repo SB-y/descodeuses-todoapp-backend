@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 // Indique que cette classe est un service Spring (composant métier)
 @Service
-@Profile("!test")
 public class LogDocumentService {
 
     // Injecte le repository MongoDB pour enregistrer les logs
