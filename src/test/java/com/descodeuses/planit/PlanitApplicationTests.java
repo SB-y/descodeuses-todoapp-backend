@@ -2,29 +2,19 @@ package com.descodeuses.planit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.descodeuses.planit.service.LogDocumentService;
 
-@SpringBootTest(
-    properties = {
-        "spring.data.mongodb.uri=",
-        "spring.autoconfigure.exclude=" +
-        "org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration," +
-        "org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration"
-    }
-)
-
+@SpringBootTest
 @ActiveProfiles("test")
 class PlanitApplicationTests {
 
-	    @MockBean
+     @MockitoBean
     private LogDocumentService logDocumentService;
 
     @Test
     void contextLoads() {
     }
-
-
 }
