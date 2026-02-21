@@ -51,7 +51,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
         // Trouver lien todolist et click
         const todolistLink = await driver.wait(
-            until.elementLocated(By.linkText("Ma gestion de la to-do list")),
+            until.elementLocated(By.linkText("Ma to-do list")),
             10000
         );
         await todolistLink.click();
