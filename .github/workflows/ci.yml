@@ -1,4 +1,4 @@
-name: CI Planit
+name: CI Backend
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
     branches: [ main ]
 
 jobs:
-
   backend:
     runs-on: ubuntu-latest
 
@@ -20,26 +19,5 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build & Test Backend
+      - name: Build & Test
         run: mvn clean test
-
-  frontend:
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./descodeuses-app
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Angular tests
-        run: npm run test -- --watch=false --browsers=ChromeHeadless
