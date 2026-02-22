@@ -42,13 +42,13 @@ public class ContactController {
     }
 
     @PostMapping
-    public ResponseEntity<ContactDTO> create(@Valid @RequestBody ContactDTO dto, Authentication authentication) {
+    public ResponseEntity<ContactDTO> create( @RequestBody ContactDTO dto, Authentication authentication) {
         ContactDTO created = service.create(dto, authentication);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ContactDTO> update(@PathVariable Long id, @Valid @RequestBody ContactDTO dto, Authentication authentication) {
+    public ResponseEntity<ContactDTO> update(@PathVariable Long id, @RequestBody ContactDTO dto, Authentication authentication) {
         ContactDTO updated = service.update(id, dto, authentication);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }

@@ -32,7 +32,7 @@ public class MessageController {
     // Ajouter un message à une tâche
     @PostMapping("/{todoId}")
     public MessageDTO addMessage(@PathVariable Long todoId,
-                                 @Valid @RequestBody String content,
+                                 @RequestBody String content,
                                  Authentication auth) {
         // auth = permet d'identifier qui envoie le message
         return service.addMessage(todoId, content, auth);
