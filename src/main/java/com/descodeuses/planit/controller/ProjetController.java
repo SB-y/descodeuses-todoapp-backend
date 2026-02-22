@@ -45,13 +45,13 @@ public class ProjetController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjetDTO> create(@Valid @RequestBody ProjetDTO dto, Authentication authentication) {
+    public ResponseEntity<ProjetDTO> create(@RequestBody ProjetDTO dto, Authentication authentication) {
         ProjetDTO created = service.create(dto, authentication);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjetDTO> update(@PathVariable Long id, @Valid @RequestBody ProjetDTO dto, Authentication authentication) {
+    public ResponseEntity<ProjetDTO> update(@PathVariable Long id, @RequestBody ProjetDTO dto, Authentication authentication) {
         ProjetDTO updated = service.update(id, dto, authentication);
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }

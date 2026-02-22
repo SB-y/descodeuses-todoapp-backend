@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 // Indique que c’est un service Spring, donc une classe métier réutilisable
 import org.springframework.stereotype.Service;
 
+import com.descodeuses.planit.dto.RegisterRequest;
 import com.descodeuses.planit.dto.UtilisateurDTO;
 import com.descodeuses.planit.entity.ActionEntity;
 import com.descodeuses.planit.entity.ProjetEntity;
@@ -135,7 +136,6 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
     }
 
-
     // Sécurise les pages profil (accessibles par l'utilisateur concerné et l'admin)
     public UtilisateurDTO getByIdSecure(Long id, Authentication auth) {
 
@@ -153,16 +153,23 @@ public class UserService {
     }
 
     // Ajoute utilisateur
-    public void register(UtilisateurEntity user) {
-        if (utilisateurRepository.findByUsername(user.getUsername()).isPresent()) {
+    public void register(RegisterRequest request) {
+
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
             throw new RuntimeException("Utilisateur déjà existant");
         }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+    
+        UtilisateurEntity user = new UtilisateurEntity();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // OBLIGATOIRE
+        user.setName(request.getName());
+        user.setSurname(request.getSurname());
+        user.setGenre(request.getGenre());
         user.setRole("ROLE_USER");
-        utilisateurRepository.save(user);
+    
+        repository.save(user);
     }
-
+    
     /*
      * // Supprime un utilisateur
      * public void delete(Long id) {

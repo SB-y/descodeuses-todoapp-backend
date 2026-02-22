@@ -109,7 +109,7 @@ public class ActionController {
     private LogDocumentService logDocumentService;
 
     @PostMapping
-    public ResponseEntity<ActionDTO> create(@Valid @RequestBody ActionDTO newDTO, Authentication authentication,
+    public ResponseEntity<ActionDTO> create(@RequestBody ActionDTO newDTO, Authentication authentication,
             HttpServletRequest request) {
 
         // Création de l'action
@@ -129,7 +129,7 @@ public class ActionController {
     // Méthode pour gérer les requêtes PUT vers /api/action/{id} : mise à jour d’une
     // action existante
     @PutMapping("/{id}")
-    public ResponseEntity<ActionDTO> update(@PathVariable Long id, @Valid @RequestBody ActionDTO dto,
+    public ResponseEntity<ActionDTO> update(@PathVariable Long id, @RequestBody ActionDTO dto,
             Authentication authentication, HttpServletRequest request) {
 
         // Appel du service pour mettre à jour l’action identifiée par l’id avec les
