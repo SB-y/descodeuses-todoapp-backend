@@ -1,3 +1,25 @@
+/*
+ * Rôle :
+ * Ce service est responsable de la journalisation (logging fonctionnel)
+ * des actions importantes de l’application dans une base MongoDB.
+ *
+ * Objectif :
+ * - Conserver une trace des opérations sensibles :
+ *      • Connexions (login)
+ *      • Création / modification d’actions
+ *      • Événements métier importants
+ *
+ * Architecture :
+ * - Les données métier principales sont stockées en PostgreSQL.
+ * - Les logs sont stockés en MongoDB (base NoSQL dédiée).
+ *
+ * ➜ Cela permet de séparer :
+ *      - Données transactionnelles (SQL)
+ *      - Données de traçabilité (NoSQL)
+*/
+
+
+
 // Définit le package dans lequel se trouve ce service
 package com.descodeuses.planit.service;
 

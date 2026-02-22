@@ -1,3 +1,32 @@
+/*
+ * Rôle :
+ * Ce DTO représente une tâche (Action) exposée par l’API REST.
+ * Il permet de transférer les données entre le backend (Spring Boot)
+ * et le frontend (Angular), sans exposer directement l’entité JPA.
+ *En entrée (POST / PUT) :
+ *    - memberIds : contient uniquement les IDs des contacts sélectionnés.
+ *    - assignedUserIds : contient uniquement les IDs des utilisateurs assignés.
+ *    - projetId : ID du projet associé.
+ *
+ *    ➜ Le backend reconstruit ensuite les entités complètes via les repositories.
+ *
+ *En sortie (GET) :
+ *    - membres : objets ContactDTO complets (pour affichage Angular).
+ *    - utilisateursAssignes : objets UtilisateurDTO complets.
+ *    - projet : objet ProjetDTO complet.
+ *
+ *    ➜ Permet au frontend d'afficher directement les informations détaillées.
+ *
+ * Relations gérées :
+ * - Une Action appartient à un utilisateur (propriétaire).
+ * - Une Action peut être liée à plusieurs contacts.
+ * - Une Action peut être assignée à plusieurs utilisateurs.
+ * - Une Action peut appartenir à un projet.
+
+*/
+
+
+
 package com.descodeuses.planit.dto;
 
 import java.time.LocalDate;

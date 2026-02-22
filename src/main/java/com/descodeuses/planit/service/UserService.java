@@ -11,7 +11,6 @@ package com.descodeuses.planit.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,10 +18,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 // Indique que c’est un service Spring, donc une classe métier réutilisable
 import org.springframework.stereotype.Service;
 
+
 import com.descodeuses.planit.dto.RegisterRequest;
 import com.descodeuses.planit.dto.UtilisateurDTO;
 import com.descodeuses.planit.entity.ActionEntity;
-import com.descodeuses.planit.entity.ProjetEntity;
+
 // Import de l’entité Utilisateur (celle qui correspond à la table des utilisateurs)
 import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.repository.ActionRepository;
@@ -40,7 +40,7 @@ import jakarta.transaction.Transactional;
 public class UserService {
 
     // Attribut privé pour accéder aux méthodes du repository
-    private final UtilisateurRepository repository;
+    private final UtilisateurRepository utilisateurRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -49,9 +49,9 @@ public class UserService {
     private final ProjetRepository projetRepository;
 
     // Constructeur avec injection du repository (Spring s’en occupe)
-    public UserService(UtilisateurRepository repository, PasswordEncoder passwordEncoder,
+    public UserService(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder,
             ActionRepository actionRepository, ContactRepository contactRepository, ProjetRepository projetRepository) {
-        this.repository = repository;
+        this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
         this.actionRepository = actionRepository;
         this.projetRepository = projetRepository;
@@ -64,17 +64,14 @@ public class UserService {
     public UtilisateurEntity findByUsername(String username) {
         // Recherche dans la base via le repository ; si rien trouvé, lève une exception
         // claire
-        return repository.findByUsername(username)
+        return utilisateurRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable avec le nom : " + username));
     }
 
     // Méthode publique pour avoir tous les utilisateurs
     public List<UtilisateurEntity> getAllUtilisateurs() {
-        return repository.findAll();
+        return utilisateurRepository.findAll();
     }
-
-    @Autowired
-    private UtilisateurRepository utilisateurRepository;
 
     // Méthode publique pour avoir l'utilisateur actuellement connecté
     public UtilisateurEntity getCurrentUser() {
@@ -89,7 +86,6 @@ public class UserService {
         UtilisateurDTO dto = new UtilisateurDTO(
                 utilisateur.getId(),
                 utilisateur.getUsername(),
-                utilisateur.getPassword(),
                 utilisateur.getRole(),
                 utilisateur.getName(),
                 utilisateur.getSurname(),
@@ -110,29 +106,32 @@ public class UserService {
         entity.setSurname(dto.getSurname());
         entity.setGenre(dto.getGenre());
 
-        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            // Ici, il faut hasher le mot de passe avant de le setter
-            String hashedPassword = passwordEncoder.encode(dto.getPassword());
-            entity.setPassword(hashedPassword);
-        }
+    
+          if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+          // Ici, il faut hasher le mot de passe avant de le setter
+          String hashedPassword = passwordEncoder.encode(dto.getPassword());
+          entity.setPassword(hashedPassword);
+          }
+         
 
         return entity;
     }
 
     // Met à jour le profil
     public UtilisateurDTO update(Long id, UtilisateurDTO dto) {
-        UtilisateurEntity existingEntity = repository.findById(id)
+        UtilisateurEntity existingEntity = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
 
         existingEntity = converttoEntity(existingEntity, dto);
 
-        UtilisateurEntity updatedEntity = repository.save(existingEntity);
+        UtilisateurEntity updatedEntity = utilisateurRepository.save(existingEntity);
         return convertToDTO(updatedEntity);
+
     }
 
     // Récupère utilisateur par id
     public UtilisateurEntity getById(Long id) {
-        return repository.findById(id)
+        return utilisateurRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
     }
 
@@ -155,10 +154,10 @@ public class UserService {
     // Ajoute utilisateur
     public void register(RegisterRequest request) {
 
-        if (repository.findByUsername(request.getUsername()).isPresent()) {
+        if (utilisateurRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new RuntimeException("Utilisateur déjà existant");
         }
-    
+
         UtilisateurEntity user = new UtilisateurEntity();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword())); // OBLIGATOIRE
@@ -166,10 +165,10 @@ public class UserService {
         user.setSurname(request.getSurname());
         user.setGenre(request.getGenre());
         user.setRole("ROLE_USER");
-    
-        repository.save(user);
+
+        utilisateurRepository.save(user);
     }
-    
+
     /*
      * // Supprime un utilisateur
      * public void delete(Long id) {

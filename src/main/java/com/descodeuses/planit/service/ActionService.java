@@ -7,23 +7,18 @@
 package com.descodeuses.planit.service;
 
 // Imports nécessaires aux collections et types optionnels
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 // Import pour gérer l'authentification Spring Security
 import org.springframework.security.core.Authentication;
 
 // Indique à Spring que c’est un service (injectable)
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
 // Imports de DTOs
 import com.descodeuses.planit.dto.ActionDTO;
