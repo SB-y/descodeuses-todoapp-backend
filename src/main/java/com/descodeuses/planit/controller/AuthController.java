@@ -81,7 +81,7 @@ public class AuthController {
 
     // Endpoint POST /auth/register → inscription d’un nouvel utilisateur
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
 
         userService.register(request);
 
