@@ -1,3 +1,15 @@
+/*
+ * Rôle :
+ * Ce DTO est utilisé pour recevoir les informations nécessaires
+ * à la création d’un nouvel utilisateur lors de l’inscription.
+
+ * Sécurité :
+ * - Le mot de passe est reçu en clair uniquement côté backend.
+ * - Il est immédiatement encodé avant stockage.
+ * - Il n’est jamais renvoyé dans une réponse API.
+*/
+
+
 package com.descodeuses.planit.dto;
 
 
@@ -52,7 +64,6 @@ public class RegisterRequest {
         return password;
     }
 
-    // ⚠️ Pas de toString avec password !
     public void setPassword(String password) {
         this.password = password;
     }

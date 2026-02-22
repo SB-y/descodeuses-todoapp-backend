@@ -1,3 +1,15 @@
+/*Ce DTO est utilisé pour transporter les identifiants de connexion
+ (username + password) lors d’une tentative d’authentification.
+
+ Ce DTO est uniquement utilisé en entrée (request).
+  Le mot de passe n’est jamais renvoyé dans une réponse API.
+  Le mot de passe n’est jamais stocké en clair en base.
+  La vérification est faite via PasswordEncoder (BCrypt).
+*/
+
+
+
+
 package com.descodeuses.planit.dto;
 
 public class AuthRequest {

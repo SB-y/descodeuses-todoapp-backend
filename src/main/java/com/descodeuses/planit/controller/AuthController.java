@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.descodeuses.planit.dto.AuthRequest;
 import com.descodeuses.planit.dto.AuthResponse;
 import com.descodeuses.planit.dto.RegisterRequest;
-import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.service.AuthService;
 import com.descodeuses.planit.service.LogDocumentService;
 import com.descodeuses.planit.service.UserService;
@@ -87,4 +86,6 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Inscription réussie !"));
     }
+
+
 }
