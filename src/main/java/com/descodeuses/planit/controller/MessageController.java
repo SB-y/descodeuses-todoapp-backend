@@ -3,6 +3,8 @@ package com.descodeuses.planit.controller;
 import com.descodeuses.planit.dto.MessageDTO;
 import com.descodeuses.planit.service.MessageService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
@@ -30,7 +32,7 @@ public class MessageController {
     // Ajouter un message à une tâche
     @PostMapping("/{todoId}")
     public MessageDTO addMessage(@PathVariable Long todoId,
-                                 @RequestBody String content,
+                                 @Valid @RequestBody String content,
                                  Authentication auth) {
         // auth = permet d'identifier qui envoie le message
         return service.addMessage(todoId, content, auth);

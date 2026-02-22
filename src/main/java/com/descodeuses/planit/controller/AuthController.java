@@ -36,6 +36,7 @@ import com.descodeuses.planit.service.LogDocumentService;
 import com.descodeuses.planit.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 // Indique que cette classe est un contrôleur REST (retourne du JSON)
 @RestController
@@ -61,7 +62,7 @@ public class AuthController {
 
     // Endpoint POST /auth/login → authentification de l’utilisateur
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request, HttpServletRequest httpRequest) {
         // Étape 1 : Authentifier l’utilisateur avec Spring Security
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
@@ -81,7 +82,7 @@ public class AuthController {
 
     // Endpoint POST /auth/register → inscription d’un nouvel utilisateur
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody UtilisateurEntity user) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody UtilisateurEntity user) {
         userService.register(user); // délègue au service UserService la création du compte
         // Retourne un message de confirmation
         return ResponseEntity.ok(Map.of("message", "Inscription réussie !"));
