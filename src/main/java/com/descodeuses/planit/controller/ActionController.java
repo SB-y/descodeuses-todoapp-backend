@@ -32,6 +32,7 @@ import com.descodeuses.planit.service.LogDocumentService;
 import com.descodeuses.planit.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 // Import d’autres annotations pour gérer les requêtes POST, PUT, path variables et corps de requête
 import org.springframework.web.bind.annotation.PostMapping;
@@ -108,7 +109,7 @@ public class ActionController {
     private LogDocumentService logDocumentService;
 
     @PostMapping
-    public ResponseEntity<ActionDTO> create(@RequestBody ActionDTO newDTO, Authentication authentication,
+    public ResponseEntity<ActionDTO> create(@Valid @RequestBody ActionDTO newDTO, Authentication authentication,
             HttpServletRequest request) {
 
         // Création de l'action
@@ -128,7 +129,7 @@ public class ActionController {
     // Méthode pour gérer les requêtes PUT vers /api/action/{id} : mise à jour d’une
     // action existante
     @PutMapping("/{id}")
-    public ResponseEntity<ActionDTO> update(@PathVariable Long id, @RequestBody ActionDTO dto,
+    public ResponseEntity<ActionDTO> update(@PathVariable Long id, @Valid @RequestBody ActionDTO dto,
             Authentication authentication, HttpServletRequest request) {
 
         // Appel du service pour mettre à jour l’action identifiée par l’id avec les

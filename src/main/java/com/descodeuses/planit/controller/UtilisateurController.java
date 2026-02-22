@@ -16,6 +16,7 @@ import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.service.UserService;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,7 +82,7 @@ public class UtilisateurController {
     // Endpoint PUT /api/utilisateur/monprofil
     // → Met à jour le profil de l’utilisateur connecté
     @PutMapping("/monprofil")
-    public ResponseEntity<UtilisateurDTO> update(@RequestBody UtilisateurDTO dto) {
+    public ResponseEntity<UtilisateurDTO> update(@Valid @RequestBody UtilisateurDTO dto) {
         UtilisateurEntity currentUser = userService.getCurrentUser();
         Long id = currentUser.getId();
 
@@ -92,7 +93,7 @@ public class UtilisateurController {
     // Endpoint PUT /api/utilisateur/{id}
     // → Met à jour un utilisateur identifié par son ID
     @PutMapping("/{id}")
-    public ResponseEntity<UtilisateurDTO> updateById(@PathVariable Long id, @RequestBody UtilisateurDTO dto) {
+    public ResponseEntity<UtilisateurDTO> updateById(@PathVariable Long id, @Valid @RequestBody UtilisateurDTO dto) {
         UtilisateurDTO updated = userService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
