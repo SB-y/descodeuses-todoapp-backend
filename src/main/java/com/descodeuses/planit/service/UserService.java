@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 // Indique que c’est un service Spring, donc une classe métier réutilisable
 import org.springframework.stereotype.Service;
 
-
 import com.descodeuses.planit.dto.RegisterRequest;
 import com.descodeuses.planit.dto.UtilisateurDTO;
 import com.descodeuses.planit.entity.ActionEntity;
@@ -59,6 +58,27 @@ public class UserService {
 
     }
 
+    // Crée un utilisateur
+    public void register(RegisterRequest request) {
+
+        if (utilisateurRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Utilisateur déjà existant");
+        }
+
+        UtilisateurEntity user = new UtilisateurEntity();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // OBLIGATOIRE
+        user.setName(request.getName());
+        user.setSurname(request.getSurname());
+        user.setGenre(request.getGenre());
+        user.setRole("ROLE_USER");
+
+        utilisateurRepository.save(user);
+    }
+
+
+
+
     // Méthode publique pour rechercher un utilisateur par son nom d'utilisateur
     // (username)
     public UtilisateurEntity findByUsername(String username) {
@@ -68,65 +88,12 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Utilisateur introuvable avec le nom : " + username));
     }
 
-    // Méthode publique pour avoir tous les utilisateurs
-    public List<UtilisateurEntity> getAllUtilisateurs() {
-        return utilisateurRepository.findAll();
-    }
-
     // Méthode publique pour avoir l'utilisateur actuellement connecté
     public UtilisateurEntity getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         return utilisateurRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
-    }
-
-    public UtilisateurDTO convertToDTO(UtilisateurEntity utilisateur) {
-        // Crée un DTO à partir de l'entité de base
-        UtilisateurDTO dto = new UtilisateurDTO(
-                utilisateur.getId(),
-                utilisateur.getUsername(),
-                utilisateur.getRole(),
-                utilisateur.getName(),
-                utilisateur.getSurname(),
-                utilisateur.getGenre());
-
-        return dto;
-    }
-
-    public UtilisateurEntity converttoEntity(UtilisateurEntity entity, UtilisateurDTO dto) {
-        entity.setUsername(dto.getUsername());
-
-        // Ne pas écraser le rôle si non fourni dans le DTO
-        if (dto.getRole() != null && !dto.getRole().isEmpty()) {
-            entity.setRole(dto.getRole());
-        }
-
-        entity.setName(dto.getName());
-        entity.setSurname(dto.getSurname());
-        entity.setGenre(dto.getGenre());
-
-    
-          if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-          // Ici, il faut hasher le mot de passe avant de le setter
-          String hashedPassword = passwordEncoder.encode(dto.getPassword());
-          entity.setPassword(hashedPassword);
-          }
-         
-
-        return entity;
-    }
-
-    // Met à jour le profil
-    public UtilisateurDTO update(Long id, UtilisateurDTO dto) {
-        UtilisateurEntity existingEntity = utilisateurRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
-
-        existingEntity = converttoEntity(existingEntity, dto);
-
-        UtilisateurEntity updatedEntity = utilisateurRepository.save(existingEntity);
-        return convertToDTO(updatedEntity);
-
     }
 
     // Récupère utilisateur par id
@@ -151,34 +118,29 @@ public class UserService {
         return convertToDTO(target);
     }
 
-    // Ajoute utilisateur
-    public void register(RegisterRequest request) {
-
-        if (utilisateurRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Utilisateur déjà existant");
-        }
-
-        UtilisateurEntity user = new UtilisateurEntity();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword())); // OBLIGATOIRE
-        user.setName(request.getName());
-        user.setSurname(request.getSurname());
-        user.setGenre(request.getGenre());
-        user.setRole("ROLE_USER");
-
-        utilisateurRepository.save(user);
+     // Méthode publique pour avoir tous les utilisateurs
+     public List<UtilisateurEntity> getAllUtilisateurs() {
+        return utilisateurRepository.findAll();
     }
 
-    /*
-     * // Supprime un utilisateur
-     * public void delete(Long id) {
-     * if (!repository.existsById(id)) {
-     * throw new EntityNotFoundException("Projet non trouvé avec id: " + id);
-     * }
-     * repository.deleteById(id);
-     * }
-     */
 
+
+
+    // Met à jour le profil
+    public UtilisateurDTO update(Long id, UtilisateurDTO dto) {
+        UtilisateurEntity existingEntity = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec id: " + id));
+
+        existingEntity = converttoEntity(existingEntity, dto);
+
+        UtilisateurEntity updatedEntity = utilisateurRepository.save(existingEntity);
+        return convertToDTO(updatedEntity);
+
+    }
+
+
+
+    // Supprime le profil
     @Transactional
     public void delete(Long id) {
         UtilisateurEntity user = utilisateurRepository.findById(id)
@@ -204,5 +166,50 @@ public class UserService {
         // Enfin supprimer l’utilisateur
         utilisateurRepository.delete(user);
     }
+
+    // Méthodes dto-entity
+    public UtilisateurDTO convertToDTO(UtilisateurEntity utilisateur) {
+        // Crée un DTO à partir de l'entité de base
+        UtilisateurDTO dto = new UtilisateurDTO(
+                utilisateur.getId(),
+                utilisateur.getUsername(),
+                utilisateur.getRole(),
+                utilisateur.getName(),
+                utilisateur.getSurname(),
+                utilisateur.getGenre());
+
+        return dto;
+    }
+
+    public UtilisateurEntity converttoEntity(UtilisateurEntity entity, UtilisateurDTO dto) {
+        entity.setUsername(dto.getUsername());
+
+        // Ne pas écraser le rôle si non fourni dans le DTO
+        if (dto.getRole() != null && !dto.getRole().isEmpty()) {
+            entity.setRole(dto.getRole());
+        }
+
+        entity.setName(dto.getName());
+        entity.setSurname(dto.getSurname());
+        entity.setGenre(dto.getGenre());
+
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            // Ici, il faut hasher le mot de passe avant de le setter
+            String hashedPassword = passwordEncoder.encode(dto.getPassword());
+            entity.setPassword(hashedPassword);
+        }
+
+        return entity;
+    }
+
+    /*
+     * // Supprime un utilisateur
+     * public void delete(Long id) {
+     * if (!repository.existsById(id)) {
+     * throw new EntityNotFoundException("Projet non trouvé avec id: " + id);
+     * }
+     * repository.deleteById(id);
+     * }
+     */
 
 }

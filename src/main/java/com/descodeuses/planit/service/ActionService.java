@@ -50,7 +50,7 @@ public class ActionService {
     private final ProjetRepository projetRepository;
     private final UserService userService;
 
-    @Autowired
+    //@Autowired
     private final UtilisateurRepository utilisateurRepository;
 
     // Constructeur avec injection des dépendances
@@ -62,6 +62,175 @@ public class ActionService {
         this.utilisateurRepository = utilisateurRepository;
         this.userService = userService;
     }
+
+
+
+
+    // 1.CREATE
+    // Crée une nouvelle action à partir d’un DTO
+    public ActionDTO create(ActionDTO dto, Authentication authentication) {
+        ProjetEntity projet = null;
+
+        // Si un ID de projet est fourni, on récupère le projet associé
+        if (dto.getProjetId() != null) {
+            projet = projetRepository.findById(dto.getProjetId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Projet introuvable avec l'id : " + dto.getProjetId()));
+        }
+
+        // Récupère tous les contacts dont les IDs sont dans le DTO
+        Set<ContactEntity> contacts = new HashSet<>();
+        if (dto.getMemberIds() != null && !dto.getMemberIds().isEmpty()) {
+            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
+        }
+
+        // Récupère l’utilisateur authentifié via Spring Security
+        String username = authentication.getName();
+        UtilisateurEntity utilisateur = userService.findByUsername(username);
+
+        /*
+         * UserDetails userDetails =
+         * (UserDetails)SecurityContextHolder.getContext().getAuthentication().
+         * getPrincipal();
+         * String username = userDetails.getUsername();
+         * DCUser user = userRepository.findByUsername(username)
+         * .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+         */
+
+        // Convertit les données en entité, puis sauvegarde
+        ActionEntity entity = convertToEntity(dto, contacts, projet, utilisateur);
+        // todo.setUtilisateur(user);
+        ActionEntity savedEntity = repository.save(entity);
+
+        return convertToDTO(savedEntity); // Retourne l’action créée
+    }
+
+
+
+
+
+    // 2. READ
+    public List<ActionDTO> getAssignedToMe(Authentication authentication) {
+        String username = authentication.getName();
+        UtilisateurEntity utilisateur = userService.findByUsername(username);
+
+        List<ActionEntity> actions = repository.findByUtilisateursAssignesContaining(utilisateur);
+
+        return actions.stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+    // Récupère toutes les actions de l'utilisateur depuis la base de données
+    public List<ActionDTO> getAllByUser(Authentication authentication) {
+        // Récupère l'utilisateur connecté à partir de son nom d'utilisateur
+        String username = authentication.getName();
+        UtilisateurEntity utilisateur = userService.findByUsername(username);
+
+        // Récupère uniquement les actions qui lui appartiennent
+        List<ActionEntity> actions = repository.findByUtilisateur(utilisateur);
+
+        // Convertit chaque ActionEntity en ActionDTO
+        return actions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Récupère une seule action par son ID seulement pour l'utilisateur à l'origine
+    // et l'utilisateur assigné
+    public ActionDTO getActionById(Long id, Authentication authentication) {
+        String username = authentication.getName();
+        UtilisateurEntity currentUser = userService.findByUsername(username);
+
+        // Récupération de la tâche
+        ActionEntity action = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Tâche introuvable"));
+
+        // Vérifie si le user est propriétaire OU assigné
+        boolean isOwner = action.getUtilisateur().getId().equals(currentUser.getId());
+        boolean isAssigned = action.getUtilisateursAssignes().stream()
+                .anyMatch(u -> u.getId().equals(currentUser.getId()));
+
+        if (!isOwner && !isAssigned) {
+            throw new SecurityException("Accès refusé : vous n’êtes pas autorisé à consulter cette tâche.");
+        }
+
+        return convertToDTO(action);
+    }
+
+
+
+
+
+    // 3. UPDATE
+    // Met à jour une action existante
+    public ActionDTO update(Long id, ActionDTO dto, Authentication authentication) {
+        // Récupérer utilisateur connecté et l’assigner
+        String username = authentication.getName();
+
+        // Recherche sécurisée : uniquement si la tâche appartient à l'utilisateur connecté
+        ActionEntity existingEntity = repository.findByIdAndUtilisateurUsername(id, username)
+                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à modifier cette tâche."));
+
+        // Met à jour les champs modifiables
+        existingEntity.setTitle(dto.getTitle());
+        existingEntity.setCompleted(dto.getCompleted());
+        existingEntity.setDueDate(dto.getDueDate());
+        existingEntity.setTextarea(dto.getTextarea());
+        existingEntity.setPriorite(dto.getPriorite());
+
+        // Met à jour les membres s’il y en a
+        Set<ContactEntity> contacts = new HashSet<>();
+        if (dto.getMemberIds() != null) {
+            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
+        }
+        existingEntity.setMembers(contacts);
+
+        // Met à jour le projet si un nouvel ID est fourni
+        if (dto.getProjetId() != null) {
+            ProjetEntity projet = projetRepository.findById(dto.getProjetId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Tache introuvable avec l'id : " + dto.getProjetId()));
+            existingEntity.setProjet(projet);
+        }
+
+        // Met à jour les utilisateurs assignés
+        if (dto.getAssignedUserIds() != null) {
+            Set<UtilisateurEntity> assignedUsers = new HashSet<>(
+                    utilisateurRepository.findAllById(dto.getAssignedUserIds()));
+            existingEntity.setUtilisateursAssignes(assignedUsers);
+        } else {
+            existingEntity.setUtilisateursAssignes(new HashSet<>()); // vide si rien envoyé
+        }
+
+        // Récupérer utilisateur connecté et l’assigner
+        // String username = authentication.getName();
+        // UtilisateurEntity utilisateur = userService.findByUsername(username);
+        // existingEntity.setUtilisateur(utilisateur);
+
+        // Enregistre l'entité modifiée
+        ActionEntity updatedEntity = repository.save(existingEntity);
+        return convertToDTO(updatedEntity);
+    }
+
+
+
+
+    // 4. DELETE
+    public void delete(Long id, Authentication authentication) {
+        String username = authentication.getName();
+
+        // Seul le propriétaire de la tâche peut la supprimer
+        ActionEntity entity = repository.findByIdAndUtilisateurUsername(id, username)
+                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à supprimer cette tâche."));
+
+        repository.delete(entity);
+    }
+
+
+
+
+
 
     // Méthode privée pour convertir une ActionEntity en ActionDTO
     private ActionDTO convertToDTO(ActionEntity action) {
@@ -124,6 +293,10 @@ public class ActionService {
         return dto;
     }
 
+
+
+
+
     // Convertit un DTO en entité (pour insertion ou update)
     private ActionEntity convertToEntity(ActionDTO actionDTO, Set<ContactEntity> members, ProjetEntity projet,
             UtilisateurEntity utilisateur) {
@@ -148,6 +321,13 @@ public class ActionService {
         return action;
     }
 
+
+
+
+
+
+
+
     /*
      * // Récupère toutes les actions depuis la base de données
      * public List<ActionDTO> getAll() {
@@ -161,42 +341,6 @@ public class ActionService {
      * }
      * 
      */
-
-    // Récupère toutes les actions de l'utilisateur depuis la base de données
-    public List<ActionDTO> getAllByUser(Authentication authentication) {
-        // Récupère l'utilisateur connecté à partir de son nom d'utilisateur
-        String username = authentication.getName();
-        UtilisateurEntity utilisateur = userService.findByUsername(username);
-
-        // Récupère uniquement les actions qui lui appartiennent
-        List<ActionEntity> actions = repository.findByUtilisateur(utilisateur);
-
-        // Convertit chaque ActionEntity en ActionDTO
-        return actions.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    // Récupère une seule action par son ID seulement pour l'utilisateur à l'origine et l'utilisateur assigné
-    public ActionDTO getActionById(Long id, Authentication authentication) {
-        String username = authentication.getName();
-        UtilisateurEntity currentUser = userService.findByUsername(username);
-
-        // Récupération de la tâche
-        ActionEntity action = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Tâche introuvable"));
-
-        // Vérifie si le user est propriétaire OU assigné
-        boolean isOwner = action.getUtilisateur().getId().equals(currentUser.getId());
-        boolean isAssigned = action.getUtilisateursAssignes().stream()
-                .anyMatch(u -> u.getId().equals(currentUser.getId()));
-
-        if (!isOwner && !isAssigned) {
-            throw new SecurityException("Accès refusé : vous n’êtes pas autorisé à consulter cette tâche.");
-        }
-
-        return convertToDTO(action);
-    }
 
     /*
      * // Récupère une seule action par son ID
@@ -212,104 +356,6 @@ public class ActionService {
      * }
      */
 
-    // Crée une nouvelle action à partir d’un DTO
-    public ActionDTO create(ActionDTO dto, Authentication authentication) {
-        ProjetEntity projet = null;
-
-        // Si un ID de projet est fourni, on récupère le projet associé
-        if (dto.getProjetId() != null) {
-            projet = projetRepository.findById(dto.getProjetId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Projet introuvable avec l'id : " + dto.getProjetId()));
-        }
-
-        // Récupère tous les contacts dont les IDs sont dans le DTO
-        Set<ContactEntity> contacts = new HashSet<>();
-        if (dto.getMemberIds() != null && !dto.getMemberIds().isEmpty()) {
-            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
-        }
-
-        // Récupère l’utilisateur authentifié via Spring Security
-        String username = authentication.getName();
-        UtilisateurEntity utilisateur = userService.findByUsername(username);
-
-        /*
-         * UserDetails userDetails =
-         * (UserDetails)SecurityContextHolder.getContext().getAuthentication().
-         * getPrincipal();
-         * String username = userDetails.getUsername();
-         * DCUser user = userRepository.findByUsername(username)
-         * .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-         */
-
-        // Convertit les données en entité, puis sauvegarde
-        ActionEntity entity = convertToEntity(dto, contacts, projet, utilisateur);
-        // todo.setUtilisateur(user);
-        ActionEntity savedEntity = repository.save(entity);
-
-        return convertToDTO(savedEntity); // Retourne l’action créée
-    }
-
-    // Met à jour une action existante
-    public ActionDTO update(Long id, ActionDTO dto, Authentication authentication) {
-        // Récupérer utilisateur connecté et l’assigner
-        String username = authentication.getName();
-
-        // Recherche sécurisée : uniquement si la tâche appartient à l'utilisateur connecté
-        ActionEntity existingEntity = repository.findByIdAndUtilisateurUsername(id, username)
-                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à modifier cette tâche."));
-
-        // Met à jour les champs modifiables
-        existingEntity.setTitle(dto.getTitle());
-        existingEntity.setCompleted(dto.getCompleted());
-        existingEntity.setDueDate(dto.getDueDate());
-        existingEntity.setTextarea(dto.getTextarea());
-        existingEntity.setPriorite(dto.getPriorite());
-
-        // Met à jour les membres s’il y en a
-        Set<ContactEntity> contacts = new HashSet<>();
-        if (dto.getMemberIds() != null) {
-            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
-        }
-        existingEntity.setMembers(contacts);
-
-        // Met à jour le projet si un nouvel ID est fourni
-        if (dto.getProjetId() != null) {
-            ProjetEntity projet = projetRepository.findById(dto.getProjetId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Tache introuvable avec l'id : " + dto.getProjetId()));
-            existingEntity.setProjet(projet);
-        }
-
-        // Met à jour les utilisateurs assignés
-        if (dto.getAssignedUserIds() != null) {
-            Set<UtilisateurEntity> assignedUsers = new HashSet<>(
-                    utilisateurRepository.findAllById(dto.getAssignedUserIds()));
-            existingEntity.setUtilisateursAssignes(assignedUsers);
-        } else {
-            existingEntity.setUtilisateursAssignes(new HashSet<>()); // vide si rien envoyé
-        }
-
-        // Récupérer utilisateur connecté et l’assigner
-        // String username = authentication.getName();
-        // UtilisateurEntity utilisateur = userService.findByUsername(username);
-        // existingEntity.setUtilisateur(utilisateur);
-
-        // Enregistre l'entité modifiée
-        ActionEntity updatedEntity = repository.save(existingEntity);
-        return convertToDTO(updatedEntity);
-    }
-
-    public void delete(Long id, Authentication authentication) {
-        String username = authentication.getName();
-
-        // Seul le propriétaire de la tâche peut la supprimer
-        ActionEntity entity = repository.findByIdAndUtilisateurUsername(id, username)
-                .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à supprimer cette tâche."));
-
-        repository.delete(entity);
-    }
-
     /*
      * // Supprime une action selon son ID
      * public void delete(Long id) {
@@ -321,14 +367,4 @@ public class ActionService {
      * }
      */
 
-    public List<ActionDTO> getAssignedToMe(Authentication authentication) {
-        String username = authentication.getName();
-        UtilisateurEntity utilisateur = userService.findByUsername(username);
-
-        List<ActionEntity> actions = repository.findByUtilisateursAssignesContaining(utilisateur);
-
-        return actions.stream()
-                .map(this::convertToDTO)
-                .toList();
-    }
 }
