@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.descodeuses.planit.dto.AuthRequest;
 import com.descodeuses.planit.dto.AuthResponse;
 import com.descodeuses.planit.dto.RegisterRequest;
+import com.descodeuses.planit.entity.UtilisateurEntity;
 import com.descodeuses.planit.service.AuthService;
 import com.descodeuses.planit.service.LogDocumentService;
 import com.descodeuses.planit.service.UserService;
@@ -74,6 +75,15 @@ public class AuthController {
         // Étape 3 : Générer le JWT via le service d’authentification
         String jwt = authService.login(request.getUsername(), request.getPassword());
 
+        // Log pour mongo db
+        UtilisateurEntity user = userService.findByUsername(request.getUsername());
+
+        logService.addLog(
+                "LOGIN_SUCCESS",
+                httpRequest,
+                request,
+                user);
+
         // Étape 4 : Retourner le token JWT et le rôle de l’utilisateur dans la réponse
         return ResponseEntity.ok(new AuthResponse(jwt, role));
     }
@@ -86,6 +96,5 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Inscription réussie !"));
     }
-
 
 }

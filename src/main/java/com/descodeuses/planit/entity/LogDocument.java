@@ -28,7 +28,7 @@ public class LogDocument {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime Timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
