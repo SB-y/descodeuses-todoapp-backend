@@ -50,7 +50,7 @@ public class ActionService {
     private final ProjetRepository projetRepository;
     private final UserService userService;
 
-    //@Autowired
+    // @Autowired
     private final UtilisateurRepository utilisateurRepository;
 
     // Constructeur avec injection des dépendances
@@ -63,51 +63,62 @@ public class ActionService {
         this.userService = userService;
     }
 
-
-
-
     // 1.CREATE
     // Crée une nouvelle action à partir d’un DTO
     public ActionDTO create(ActionDTO dto, Authentication authentication) {
-        ProjetEntity projet = null;
 
-        // Si un ID de projet est fourni, on récupère le projet associé
-        if (dto.getProjetId() != null) {
-            projet = projetRepository.findById(dto.getProjetId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Projet introuvable avec l'id : " + dto.getProjetId()));
-        }
-
-        // Récupère tous les contacts dont les IDs sont dans le DTO
-        Set<ContactEntity> contacts = new HashSet<>();
-        if (dto.getMemberIds() != null && !dto.getMemberIds().isEmpty()) {
-            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
-        }
-
-        // Récupère l’utilisateur authentifié via Spring Security
         String username = authentication.getName();
         UtilisateurEntity utilisateur = userService.findByUsername(username);
 
-        /*
-         * UserDetails userDetails =
-         * (UserDetails)SecurityContextHolder.getContext().getAuthentication().
-         * getPrincipal();
-         * String username = userDetails.getUsername();
-         * DCUser user = userRepository.findByUsername(username)
-         * .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-         */
+        // Gestion projet
+        ProjetEntity projet = null;
 
-        // Convertit les données en entité, puis sauvegarde
-        ActionEntity entity = convertToEntity(dto, contacts, projet, utilisateur);
-        // todo.setUtilisateur(user);
+        if (dto.getProjetId() != null) {
+            projet = projetRepository.findById(dto.getProjetId())
+                    .orElseThrow(() -> new EntityNotFoundException("Projet introuvable"));
+
+            if (!projet.getUtilisateur().getId().equals(utilisateur.getId())) {
+                throw new SecurityException("Accès refusé : projet non autorisé");
+            }
+        }
+
+        // Gestion contacts
+        Set<ContactEntity> contacts = new HashSet<>();
+
+        if (dto.getMemberIds() != null) {
+
+            List<ContactEntity> foundContacts = contactRepository.findAllById(dto.getMemberIds());
+
+            for (ContactEntity contact : foundContacts) {
+
+                if (!contact.getUtilisateur().getId().equals(utilisateur.getId())) {
+                    throw new SecurityException("Accès refusé : contact non autorisé");
+                }
+
+                contacts.add(contact);
+            }
+        }
+
+        // Gestion utilisateurs assignés
+        Set<UtilisateurEntity> assignedUsers = new HashSet<>();
+
+        if (dto.getAssignedUserIds() != null && !dto.getAssignedUserIds().isEmpty()) {
+            assignedUsers.addAll(
+                    utilisateurRepository.findAllById(dto.getAssignedUserIds()));
+        }
+
+        // Conversion et sauvegarde
+        ActionEntity entity = convertToEntity(
+                dto,
+                contacts,
+                projet,
+                utilisateur,
+                assignedUsers);
+
         ActionEntity savedEntity = repository.save(entity);
 
-        return convertToDTO(savedEntity); // Retourne l’action créée
+        return convertToDTO(savedEntity);
     }
-
-
-
-
 
     // 2. READ
     public List<ActionDTO> getAssignedToMe(Authentication authentication) {
@@ -158,17 +169,14 @@ public class ActionService {
         return convertToDTO(action);
     }
 
-
-
-
-
     // 3. UPDATE
     // Met à jour une action existante
     public ActionDTO update(Long id, ActionDTO dto, Authentication authentication) {
         // Récupérer utilisateur connecté et l’assigner
         String username = authentication.getName();
 
-        // Recherche sécurisée : uniquement si la tâche appartient à l'utilisateur connecté
+        // Recherche sécurisée : uniquement si la tâche appartient à l'utilisateur
+        // connecté
         ActionEntity existingEntity = repository.findByIdAndUtilisateurUsername(id, username)
                 .orElseThrow(() -> new SecurityException("Vous n'êtes pas autorisé à modifier cette tâche."));
 
@@ -181,16 +189,36 @@ public class ActionService {
 
         // Met à jour les membres s’il y en a
         Set<ContactEntity> contacts = new HashSet<>();
+
         if (dto.getMemberIds() != null) {
-            contacts.addAll(contactRepository.findAllById(dto.getMemberIds()));
+
+            List<ContactEntity> foundContacts = contactRepository.findAllById(dto.getMemberIds());
+
+            for (ContactEntity contact : foundContacts) {
+
+                if (!contact.getUtilisateur().getId()
+                        .equals(existingEntity.getUtilisateur().getId())) {
+                    throw new SecurityException("Accès refusé : contact non autorisé");
+                }
+
+                contacts.add(contact);
+            }
         }
+
         existingEntity.setMembers(contacts);
 
         // Met à jour le projet si un nouvel ID est fourni
         if (dto.getProjetId() != null) {
+
             ProjetEntity projet = projetRepository.findById(dto.getProjetId())
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Tache introuvable avec l'id : " + dto.getProjetId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Projet introuvable"));
+
+            // Vérifie que le projet appartient au même utilisateur que la tâche
+            if (!projet.getUtilisateur().getId()
+                    .equals(existingEntity.getUtilisateur().getId())) {
+                throw new SecurityException("Accès refusé : projet non autorisé");
+            }
+
             existingEntity.setProjet(projet);
         }
 
@@ -213,9 +241,6 @@ public class ActionService {
         return convertToDTO(updatedEntity);
     }
 
-
-
-
     // 4. DELETE
     public void delete(Long id, Authentication authentication) {
         String username = authentication.getName();
@@ -226,11 +251,6 @@ public class ActionService {
 
         repository.delete(entity);
     }
-
-
-
-
-
 
     // Méthode privée pour convertir une ActionEntity en ActionDTO
     private ActionDTO convertToDTO(ActionEntity action) {
@@ -293,15 +313,16 @@ public class ActionService {
         return dto;
     }
 
+    // Convertit un DTO en entité (pour création)
+    private ActionEntity convertToEntity(
+            ActionDTO actionDTO,
+            Set<ContactEntity> members,
+            ProjetEntity projet,
+            UtilisateurEntity utilisateur,
+            Set<UtilisateurEntity> assignedUsers) {
 
-
-
-
-    // Convertit un DTO en entité (pour insertion ou update)
-    private ActionEntity convertToEntity(ActionDTO actionDTO, Set<ContactEntity> members, ProjetEntity projet,
-            UtilisateurEntity utilisateur) {
         ActionEntity action = new ActionEntity();
-        action.setId(actionDTO.getId());
+
         action.setTitle(actionDTO.getTitle());
         action.setCompleted(actionDTO.getCompleted());
         action.setDueDate(actionDTO.getDueDate());
@@ -310,23 +331,10 @@ public class ActionService {
         action.setMembers(members);
         action.setProjet(projet);
         action.setUtilisateur(utilisateur);
-
-        // On associe les utilisateurs assignés à cette tâche
-        if (actionDTO.getAssignedUserIds() != null && !actionDTO.getAssignedUserIds().isEmpty()) {
-            Set<UtilisateurEntity> assignedUsers = new HashSet<>(
-                    utilisateurRepository.findAllById(actionDTO.getAssignedUserIds()));
-            action.setUtilisateursAssignes(assignedUsers);
-        }
+        action.setUtilisateursAssignes(assignedUsers);
 
         return action;
     }
-
-
-
-
-
-
-
 
     /*
      * // Récupère toutes les actions depuis la base de données
