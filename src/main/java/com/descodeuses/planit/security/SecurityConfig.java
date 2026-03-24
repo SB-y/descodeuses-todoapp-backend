@@ -112,8 +112,18 @@ public class SecurityConfig {
     }
 
     /**
-     * Définit l'encodeur de mot de passe à utiliser.
-     * BCrypt est le standard de l'industrie pour le hachage sécurisé.
+     * Déclare un bean Spring de type PasswordEncoder.
+     *
+     * Cette méthode indique à Spring comment créer l'objet chargé
+     * de hacher les mots de passe dans l'application. Cette méthode retourne un objet qui 
+     * respecte le contrat PasswordEncoder (interface implémentée par la classe BCryptPasswordEncoder)
+     *
+     * L'implémentation choisie est BCryptPasswordEncoder,
+     * qui utilise l'algorithme BCrypt.
+     *
+     * L'objet retourné (new BCryptPasswordEncoder()) sera automatiquement injecté
+     * dans les classes nécessitant un PasswordEncoder
+     * (ex : lors de l'inscription ou de l'authentification).
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

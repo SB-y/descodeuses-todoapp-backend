@@ -58,8 +58,8 @@ public class ActionController {
         this.userService = userService;
     }
 
- // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération
-    // d’une action par son id pour l'utilisateur à l'origine et l'utilisateur assigné
+ // Méthode pour gérer les requêtes GET vers /api/action/{id} : récupération d’une action par son id pour 
+ // l'utilisateur à l'origine et l'utilisateur assigné
     @GetMapping("/{id}")
     public ResponseEntity<ActionDTO> getActionById(@PathVariable Long id, Authentication authentication) {
         ActionDTO actionDTO = service.getActionById(id, authentication);

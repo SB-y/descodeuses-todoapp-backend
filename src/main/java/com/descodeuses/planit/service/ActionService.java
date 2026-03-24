@@ -63,6 +63,7 @@ public class ActionService {
         this.userService = userService;
     }
 
+
     // 1.CREATE
     // Crée une nouvelle action à partir d’un DTO
     public ActionDTO create(ActionDTO dto, Authentication authentication) {
@@ -70,7 +71,7 @@ public class ActionService {
         String username = authentication.getName();
         UtilisateurEntity utilisateur = userService.findByUsername(username);
 
-        // Gestion projet
+        // Vérification existence projet et vérification des droits (propriétaire)
         ProjetEntity projet = null;
 
         if (dto.getProjetId() != null) {
@@ -82,7 +83,7 @@ public class ActionService {
             }
         }
 
-        // Gestion contacts
+        // Vérification existence contacs et vérification des droits (propriétaire)
         Set<ContactEntity> contacts = new HashSet<>();
 
         if (dto.getMemberIds() != null) {
@@ -99,7 +100,7 @@ public class ActionService {
             }
         }
 
-        // Gestion utilisateurs assignés
+        // Vérification existence utilisateurs assignés
         Set<UtilisateurEntity> assignedUsers = new HashSet<>();
 
         if (dto.getAssignedUserIds() != null && !dto.getAssignedUserIds().isEmpty()) {
@@ -108,17 +109,13 @@ public class ActionService {
         }
 
         // Conversion et sauvegarde
-        ActionEntity entity = convertToEntity(
-                dto,
-                contacts,
-                projet,
-                utilisateur,
-                assignedUsers);
+        ActionEntity entity = convertToEntity(dto, contacts, projet, utilisateur, assignedUsers);
 
         ActionEntity savedEntity = repository.save(entity);
 
         return convertToDTO(savedEntity);
     }
+
 
     // 2. READ
     public List<ActionDTO> getAssignedToMe(Authentication authentication) {
@@ -376,3 +373,6 @@ public class ActionService {
      */
 
 }
+
+
+
