@@ -32,27 +32,6 @@ public class MessageService {
     }
 
 
-    //  Conversion Entity -> DTO
-
-    /**
-     * Convertit une entité MessageEntity en MessageDTO.
-     * On renvoie un DTO car :
-     * - On ne veut jamais exposer les entités JPA directement à Angular
-     * - On contrôle exactement les données envoyées au frontend
-     */
-    private MessageDTO convertToDTO(MessageEntity m) {
-        return new MessageDTO(
-                m.getId(),                     // ID du message
-                m.getTodo().getId(),           // ID de la tâche associée
-                m.getAuthor().getId(),         // ID de l'auteur
-                m.getAuthor().getSurname(),    // Prénom
-                m.getAuthor().getName(),       // Nom
-                m.getContent(),                // Texte du message
-                m.getCreatedAt()               // Date d'envoi
-        );
-    }
-
-
     //  Vérification des droits
 
     /**
@@ -74,32 +53,8 @@ public class MessageService {
     }
 
 
-    //       LECTURE DES MESSAGES
-    /**
-     * Récupère les messages d'une tâche, triés par date croissante.
-     */
-    public List<MessageDTO> getMessages(Long todoId, Authentication auth) {
 
-        // Identifie l'utilisateur connecté
-        UtilisateurEntity user = userService.findByUsername(auth.getName());
-
-        // Récupère la tâche
-        ActionEntity todo = actionRepo.findById(todoId)
-                .orElseThrow(() -> new EntityNotFoundException("Tâche introuvable"));
-
-        // Vérifie les droits d'accès
-        checkAccess(todo, user);
-
-        // Récupère les messages et les convertit en DTO
-        return messageRepo.findByTodoOrderByCreatedAtAsc(todo)
-                .stream()
-                .map(this::convertToDTO)
-                .toList();
-    }
-
-
-
-    //        AJOUT MESSAGE
+        //        AJOUT MESSAGE
     /**
      * Enregistre un nouveau message dans la messagerie de la tâche.
      */
@@ -127,4 +82,54 @@ public class MessageService {
         // On renvoie un DTO du message pour le frontend
         return convertToDTO(saved);
     }
+
+    
+
+  //       LECTURE DES MESSAGES
+    /**
+     * Récupère les messages d'une tâche, triés par date croissante.
+     */
+    public List<MessageDTO> getMessages(Long todoId, Authentication auth) {
+
+        // Identifie l'utilisateur connecté
+        UtilisateurEntity user = userService.findByUsername(auth.getName());
+
+        // Récupère la tâche
+        ActionEntity todo = actionRepo.findById(todoId)
+                .orElseThrow(() -> new EntityNotFoundException("Tâche introuvable"));
+
+        // Vérifie les droits d'accès
+        checkAccess(todo, user);
+
+        // Récupère les messages et les convertit en DTO
+        return messageRepo.findByTodoOrderByCreatedAtAsc(todo)
+                .stream()
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+
+
+    //  Conversion Entity -> DTO
+
+    /**
+     * Convertit une entité MessageEntity en MessageDTO.
+     * On renvoie un DTO car :
+     * - On ne veut jamais exposer les entités JPA directement à Angular
+     * - On contrôle exactement les données envoyées au frontend
+     */
+    private MessageDTO convertToDTO(MessageEntity m) {
+        return new MessageDTO(
+                m.getId(),                     // ID du message
+                m.getTodo().getId(),           // ID de la tâche associée
+                m.getAuthor().getId(),         // ID de l'auteur
+                m.getAuthor().getSurname(),    // Prénom
+                m.getAuthor().getName(),       // Nom
+                m.getContent(),                // Texte du message
+                m.getCreatedAt()               // Date d'envoi
+        );
+    }
+
+
+
 }

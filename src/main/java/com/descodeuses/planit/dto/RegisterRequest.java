@@ -13,15 +13,19 @@
 package com.descodeuses.planit.dto;
 
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 
 public class RegisterRequest {
 
     @NotBlank(message = "Le username est obligatoire")
+    @Email
     private String username;
 
     @NotBlank(message = "Le mot de passe est obligatoire")
+    @Size(min = 5)
     private String password;
 
     @NotBlank(message = "Le prénom est obligatoire")
@@ -29,9 +33,6 @@ public class RegisterRequest {
 
     @NotBlank(message = "Le nom est obligatoire")
     private String surname;
-
-    @NotBlank(message = "L'email est obligatoire")
-    private String email;
 
     private String genre;
 
@@ -41,12 +42,11 @@ public class RegisterRequest {
 
     // Constructeur complet
     public RegisterRequest(String username, String password, String name, 
-                           String surname, String email, String genre) {
+                           String surname, String genre) {
         this.username = username;
         this.password = password;
         this.name = name;
         this.surname = surname;
-        this.email = email;
         this.genre = genre;
     }
 
@@ -84,13 +84,6 @@ public class RegisterRequest {
         this.surname = surname;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
 
     public String getGenre() {
         return genre;
